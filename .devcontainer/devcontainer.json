@@ -1,0 +1,29 @@
+{
+  "name": "Eminence Builder",
+  //container image defined in Dockerfile
+  "dockerFile": "Dockerfile",
+  // configure vscode settings and extensions to use in the devcontainer
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+      },
+      "extensions": [
+        "ms-python.python",
+        "hashicorp.terraform",
+        "ms-azuretools.vscode-azurefunctions",
+        "ms-toolsai.jupyter",
+        "ms-azuretools.vscode-docker",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-azuretools.vscode-azureappservice",
+        "ms-python.vscode-pylance",
+        "ms-vscode.azure-account",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-python.autopep8"
+      ]
+    }
+  },
+  "remoteUser": "vscode",
+  //"postCreateCommand": "pip install -r notebooks/requirements.txt"
+}

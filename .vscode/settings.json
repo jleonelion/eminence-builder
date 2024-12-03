@@ -1,0 +1,26 @@
+{
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "notebook.output.wordWrap": true,
+    "files.eol": "\n",
+    "editor.tabSize": 4,
+    "workbench.colorCustomizations": {
+        "titleBar.activeBackground": "#e70909",
+        "titleBar.activeForeground": "#ffffff",
+        "titleBar.inactiveBackground": "#e71009",
+        "titleBar.inactiveForeground": "#000000",
+        "activityBar.background": "#000000",
+        "activityBar.foreground": "#ffffff",
+    },
+    "python.testing.pytestArgs": [
+        "app"
+    ],
+    "python.testing.cwd": "${workspaceFolder}",
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "jupyter.debugJustMyCode": false,
+    "python.analysis.extraPaths": [
+        "./app/src",
+        "./app/tests",
+    ],
+}
