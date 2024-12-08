@@ -25,5 +25,5 @@
     }
   },
   "remoteUser": "vscode",
-  //"postCreateCommand": "pip install -r notebooks/requirements.txt"
+  "postCreateCommand": "playwright install"
 }
