@@ -172,6 +172,7 @@ node_modules/
 notebooks
 
 .langgraph-data/
+.langgraph_api/
 # Local .terraform directories
 **/.terraform/*
 **/.terraform*
