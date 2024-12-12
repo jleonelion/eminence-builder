@@ -5,30 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Streamlit",
+            "name": "Attach to LangSmith",
             "type": "debugpy",
-            "request": "launch",
-            "module": "streamlit",
-            "cwd": "/workspaces/nanny-chat/app/src",
-            "args": [
-                "run",
-                "stream_app.py",
-                "--server.enableCORS",
-                "false",
-                "--server.enableXsrfProtection",
-                "false"
-            ],
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678 // Use the same port as specified when starting the server
+            },
             "console": "integratedTerminal",
             "justMyCode": false
-        },
-        {
-            "name": "Python: Debug Tests",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "purpose": ["debug-test"],
-            "console": "integratedTerminal",
-            "justMyCode": false
-          }
+        }
     ]
 }
