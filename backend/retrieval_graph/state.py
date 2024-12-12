@@ -73,12 +73,14 @@ class Router(TypedDict):
 class AgentState(InputState):
     """State of the retrieval graph / agent."""
 
-    router: Router = field(default_factory=lambda: Router(type="general", logic=""))
+    router: Router = field(
+        default_factory=lambda: Router(type="general", logic=""))
     """The router's classification of the user's query."""
     steps: list[str] = field(default_factory=list)
     """A list of steps in the research plan."""
-    documents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
+    documents: Annotated[list[Document],
+                         reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
-    answer: str = field(default="")
-    """Final answer. Useful for evaluations"""
+    blog: str = field(default="")
+    """Blog writeup in response to the user's query."""
     query: str = field(default="")

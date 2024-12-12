@@ -1,4 +1,5 @@
 import os
+import inspect
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -6,6 +7,8 @@ import weaviate
 from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import RunnableConfig
+from langchain_community.retrievers import TavilySearchAPIRetriever
+from langchain_community.chat_models import ChatPerplexity
 from langchain_weaviate import WeaviateVectorStore
 
 from backend.configuration import BaseConfiguration
@@ -47,6 +50,38 @@ def make_weaviate_retriever(
 
 
 @contextmanager
+def make_tavily_retriever(
+    configuration: BaseConfiguration
+) -> Iterator[BaseRetriever]:
+    # Get the constructor parameters of TavilySearchAPIRetriever
+    constructor_params = inspect.signature(TavilySearchAPIRetriever).parameters
+
+    # Filter the configuration properties to match the constructor parameters
+    config_dict = {key: value for key, value in configuration.__dict__.items(
+    ) if key in constructor_params}
+
+    # Instantiate TavilySearchAPIRetriever with the filtered properties
+    retriever = TavilySearchAPIRetriever(**config_dict)
+    yield retriever
+
+
+@contextmanager
+def make_perplexity_retriever(
+    configuration: BaseConfiguration
+) -> Iterator[BaseRetriever]:
+    # Get the constructor parameters of TavilySearchAPIRetriever
+    constructor_params = inspect.signature(ChatPerplexity).parameters
+
+    # Filter the configuration properties to match the constructor parameters
+    config_dict = {key: value for key, value in configuration.__dict__.items(
+    ) if key in constructor_params}
+
+    # Instantiate TavilySearchAPIRetriever with the filtered properties
+    retriever = ChatPerplexity(streaming=True, **config_dict)
+    yield retriever
+
+
+@contextmanager
 def make_retriever(
     config: RunnableConfig,
 ) -> Iterator[BaseRetriever]:
@@ -56,6 +91,12 @@ def make_retriever(
     match configuration.retriever_provider:
         case "weaviate":
             with make_weaviate_retriever(configuration, embedding_model) as retriever:
+                yield retriever
+        case "tavily":
+            with make_tavily_retriever(configuration) as retriever:
+                yield retriever
+        case "perplexity":
+            with make_perplexity_retriever(configuration) as retriever:
                 yield retriever
 
         case _:

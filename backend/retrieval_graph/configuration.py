@@ -16,19 +16,21 @@ class AgentConfiguration(BaseConfiguration):
 
     query_model: str = field(
         default="openai/gpt-4o-mini",
+        # default="anthropic/claude-3-sonnet-20240229",
         metadata={
             "description": "The language model used for processing and refining queries. Should be in the form: provider/model-name."
         },
     )
 
-    response_model: str = field(
+    blog_model: str = field(
         default="openai/gpt-4o-mini",
+        # default="anthropic/claude-3-sonnet-20240229",
         metadata={
             "description": "The language model used for generating responses. Should be in the form: provider/model-name."
         },
     )
 
-    # prompts
+    # prompts and prompt parameters
 
     router_system_prompt: str = field(
         default=prompts.ROUTER_SYSTEM_PROMPT,
@@ -58,6 +60,20 @@ class AgentConfiguration(BaseConfiguration):
         },
     )
 
+    research_plan_subtopic_count: int = field(
+        default=3,
+        metadata={
+            "description": "The number of subtopics to consider when building the research plan."
+        },
+    )
+
+    research_plan_max_steps: int = field(
+        default=3,
+        metadata={
+            "description": "The maximum number of steps for the research plan."
+        },
+    )
+
     generate_queries_system_prompt: str = field(
         default=prompts.GENERATE_QUERIES_SYSTEM_PROMPT,
         metadata={
@@ -65,7 +81,16 @@ class AgentConfiguration(BaseConfiguration):
         },
     )
 
-    response_system_prompt: str = field(
-        default=prompts.RESPONSE_SYSTEM_PROMPT,
-        metadata={"description": "The system prompt used for generating responses."},
+    generate_queries_count: int = field(
+        default=3,
+        metadata={
+            "description": "The number of queries to generate for each step in the research plan."
+        },
+    )
+
+    blogger_system_prompt: str = field(
+        default=prompts.BLOGGER_SYSTEM_PROMPT,
+        metadata={
+            "description": "The system prompt used for generating blog post from research materials."
+        },
     )

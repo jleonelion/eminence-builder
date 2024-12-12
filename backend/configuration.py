@@ -49,10 +49,10 @@ class BaseConfiguration:
     )
 
     retriever_provider: Annotated[
-        Literal["weaviate"],
+        Literal["weaviate", "tavily"],
         {"__template_metadata__": {"kind": "retriever"}},
     ] = field(
-        default="weaviate",
+        default="tavily",
         metadata={"description": "The vector store provider to use for retrieval."},
     )
 
@@ -86,7 +86,8 @@ class BaseConfiguration:
         """
         config = ensure_config(config)
         configurable = config.get("configurable") or {}
-        configurable = _update_configurable_for_backwards_compatibility(configurable)
+        configurable = _update_configurable_for_backwards_compatibility(
+            configurable)
         _fields = {f.name for f in fields(cls) if f.init}
         return cls(**{k: v for k, v in configurable.items() if k in _fields})
 

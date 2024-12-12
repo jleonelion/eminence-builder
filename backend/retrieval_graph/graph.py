@@ -140,9 +140,13 @@ async def create_research_plan(
         steps: list[str]
 
     configuration = AgentConfiguration.from_runnable_config(config)
-    model = load_chat_model(configuration.query_model).with_structured_output(Plan)
+    model = load_chat_model(
+        configuration.query_model).with_structured_output(Plan)
     messages = [
-        {"role": "system", "content": configuration.research_plan_system_prompt}
+        {"role": "system", "content": configuration.research_plan_system_prompt.format(
+            sub_topic_count=configuration.research_plan_subtopic_count,
+            max_steps=configuration.research_plan_max_steps,
+        )}
     ] + state.messages
     response = cast(Plan, await model.ainvoke(messages))
     return {
@@ -152,7 +156,7 @@ async def create_research_plan(
     }
 
 
-async def conduct_research(state: AgentState) -> dict[str, Any]:
+async def conduct_tavily_research(state: AgentState) -> dict[str, Any]:
     """Execute the first step of the research plan.
 
     This function takes the first step from the research plan and uses it to conduct research.
@@ -168,66 +172,111 @@ async def conduct_research(state: AgentState) -> dict[str, Any]:
         - Invokes the researcher_graph with the first step of the research plan.
         - Updates the state with the retrieved documents and removes the completed step.
     """
-    result = await researcher_graph.ainvoke({"question": state.steps[0]})
+    result = await researcher_graph.ainvoke(input={"question": state.steps[0]}, config={"retriever_provider": "tavily"})
     return {"documents": result["documents"], "steps": state.steps[1:]}
 
 
-def check_finished(state: AgentState) -> Literal["respond", "conduct_research"]:
+def check_tavily_finished(state: AgentState) -> Literal["write_blog", "conduct_tavily_research"]:
     """Determine if the research process is complete or if more research is needed.
 
     This function checks if there are any remaining steps in the research plan:
-        - If there are, route back to the `conduct_research` node
-        - Otherwise, route to the `respond` node
+        - If there are, route back to the `conduct_tavily_research` node
+        - Otherwise, route to the `write_blog` node
 
     Args:
         state (AgentState): The current state of the agent, including the remaining research steps.
 
     Returns:
-        Literal["respond", "conduct_research"]: The next step to take based on whether research is complete.
+        Literal["write_blog", "conduct_tavily_research"]: The next step to take based on whether research is complete.
     """
     if len(state.steps or []) > 0:
-        return "conduct_research"
+        return "conduct_tavily_research"
     else:
-        return "respond"
+        return "write_blog"
 
 
-async def respond(
+async def conduct_perplexity_research(state: AgentState) -> dict[str, Any]:
+    """Execute the first step of the research plan.
+
+    This function takes the first step from the research plan and uses it to conduct research.
+
+    Args:
+        state (AgentState): The current state of the agent, including the research plan steps.
+
+    Returns:
+        dict[str, list[str]]: A dictionary with 'documents' containing the research results and
+                              'steps' containing the remaining research steps.
+
+    Behavior:
+        - Invokes the researcher_graph with the first step of the research plan.
+        - Updates the state with the retrieved documents and removes the completed step.
+    """
+    result = await researcher_graph.ainvoke(input={"question": state.steps[0]}, config={"retriever_provider": "perplexity"})
+    return {"documents": result["documents"], "steps": state.steps[1:]}
+
+
+def check_perplexity_finished(state: AgentState) -> Literal["write_blog", "conduct_perplexity_research"]:
+    """Determine if the research process is complete or if more research is needed.
+
+    This function checks if there are any remaining steps in the research plan:
+        - If there are, route back to the `conduct_perplexity_research` node
+        - Otherwise, route to the `write_blog` node
+
+    Args:
+        state (AgentState): The current state of the agent, including the remaining research steps.
+
+    Returns:
+        Literal["write_blog", "conduct_perplexity_research"]: The next step to take based on whether research is complete.
+    """
+    if len(state.steps or []) > 0:
+        return "conduct_perplexity_research"
+    else:
+        return "write_blog"
+
+
+async def write_blog(
     state: AgentState, *, config: RunnableConfig
 ) -> dict[str, list[BaseMessage]]:
-    """Generate a final response to the user's query based on the conducted research.
+    """Generate a blog post based on the user query and conducted research.
 
     This function formulates a comprehensive answer using the conversation history and the documents retrieved by the researcher.
 
     Args:
         state (AgentState): The current state of the agent, including retrieved documents and conversation history.
-        config (RunnableConfig): Configuration with the model used to respond.
+        config (RunnableConfig): Configuration with the model used to write post.
 
     Returns:
         dict[str, list[str]]: A dictionary with a 'messages' key containing the generated response.
     """
     configuration = AgentConfiguration.from_runnable_config(config)
-    model = load_chat_model(configuration.response_model)
+    model = load_chat_model(configuration.blog_model)
     # TODO: add a re-ranker here
     top_k = 20
     context = format_docs(state.documents[:top_k])
-    prompt = configuration.response_system_prompt.format(context=context)
+    prompt = configuration.blogger_system_prompt.format(
+        search_results=context)
     messages = [{"role": "system", "content": prompt}] + state.messages
     response = await model.ainvoke(messages)
-    return {"messages": [response], "answer": response.content}
+    return {"messages": [response], "blog": response.content}
 
 
 # Define the graph
 
 
-builder = StateGraph(AgentState, input=InputState, config_schema=AgentConfiguration)
+builder = StateGraph(AgentState, input=InputState,
+                     config_schema=AgentConfiguration)
 builder.add_node(create_research_plan)
-builder.add_node(conduct_research)
-builder.add_node(respond)
+builder.add_node(conduct_tavily_research)
+# builder.add_node(conduct_perplexity_research)
+builder.add_node(write_blog)
 
 builder.add_edge(START, "create_research_plan")
-builder.add_edge("create_research_plan", "conduct_research")
-builder.add_conditional_edges("conduct_research", check_finished)
-builder.add_edge("respond", END)
+builder.add_edge("create_research_plan", "conduct_tavily_research")
+builder.add_conditional_edges("conduct_tavily_research", check_tavily_finished)
+# builder.add_edge("create_research_plan", "conduct_perplexity_research")
+# builder.add_conditional_edges(
+#     "conduct_perplexity_research", check_perplexity_finished)
+builder.add_edge("write_blog", END)
 
 # Compile into a graph object that you can invoke and deploy.
 graph = builder.compile()

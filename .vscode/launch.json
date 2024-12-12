@@ -5,6 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "Attach to LangSmith",
             "type": "debugpy",
             "request": "attach",
@@ -12,7 +20,6 @@
                 "host": "localhost",
                 "port": 5678 // Use the same port as specified when starting the server
             },
-            "console": "integratedTerminal",
             "justMyCode": false
         }
     ]
