@@ -4,9 +4,7 @@
         "researcher": "./backend/retrieval_graph/researcher_graph/graph.py:graph",
         "chat": "./backend/retrieval_graph/graph.py:graph"
     },
-    "env": [
-        "OPENAI_API_KEY"
-    ],
+    "env": ".env",
     "python_version": "3.11",
     "dependencies": [
         "."
