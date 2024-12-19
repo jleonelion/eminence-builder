@@ -82,5 +82,5 @@ class AgentState(InputState):
                          reduce_docs] = field(default_factory=list)
     """Populated by the retriever. This is a list of documents that the agent can reference."""
     blog: str = field(default="")
-    """Blog writeup in response to the user's query."""
+    """Blog writeup in addressing the user's query."""
     query: str = field(default="")

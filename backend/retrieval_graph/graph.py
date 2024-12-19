@@ -263,7 +263,7 @@ async def write_blog(
 # Define the graph
 
 
-builder = StateGraph(AgentState, input=InputState,
+builder = StateGraph(AgentState, input=AgentState,
                      config_schema=AgentConfiguration)
 builder.add_node(create_research_plan)
 builder.add_node(conduct_tavily_research)
