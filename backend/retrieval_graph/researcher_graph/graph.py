@@ -13,7 +13,7 @@ from langgraph.graph import END, START, StateGraph
 from typing_extensions import TypedDict
 
 from backend import retrieval
-from backend.retrieval_graph.configuration import AgentConfiguration
+from backend.retrieval_graph.researcher_graph.configuration import ResearchAgentConfiguration
 from backend.retrieval_graph.researcher_graph.state import QueryState, ResearcherState
 from backend.utils import load_chat_model
 
@@ -36,7 +36,7 @@ async def generate_queries(
     class Response(TypedDict):
         queries: list[str]
 
-    configuration = AgentConfiguration.from_runnable_config(config)
+    configuration = ResearchAgentConfiguration.from_runnable_config(config)
     model = load_chat_model(
         configuration.query_model).with_structured_output(Response)
     messages = [
@@ -88,7 +88,7 @@ def retrieve_in_parallel(state: ResearcherState) -> list[Send]:
 
 
 # Define the graph
-builder = StateGraph(ResearcherState)
+builder = StateGraph(ResearcherState, config_schema=ResearchAgentConfiguration)
 builder.add_node(generate_queries)
 builder.add_node(retrieve_documents)
 builder.add_edge(START, "generate_queries")
