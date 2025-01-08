@@ -18,11 +18,9 @@ langchain-openai = ">=0.2.0,<0.3.0"
 langchain-anthropic = ">=0.2.0,<0.3.0"
 langchain-fireworks = ">=0.2.0,<0.3.0"
 langchain-groq = ">=0.2.0,<0.3.0"
-langchain-weaviate = ">=0.0.3,<0.1.0"
 langgraph = ">=0.2.32,<0.3.0"
 beautifulsoup4 = "^4.12.2"
 weaviate-client = "^4.0.0"
-lxml = "^4.9.3"
 voyageai = "^0.1.4"
 pillow = "^10.2.0"
 psycopg2-binary = "^2.9.9"
@@ -33,6 +31,8 @@ tavily-python = ">=0.5.0"
 pytest = "^7.3.0"
 ruff = "^0.2.2"
 pandas = "^2.2.2"
+langgraph-cli = { version = "*", extras = ["inmem"] }
+debugpy = "^1.8.11"
 
 [build-system]
 requires = ["poetry-core"]

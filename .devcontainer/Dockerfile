@@ -6,13 +6,14 @@ RUN apt-get update && apt-get install -y \
     libgdk-pixbuf2.0-0 \
     libdrm2 \
     libgbm1 \
-    libasound2
+    libasound2 \
+    libx11-xcb1
 
-# Install Playwright and notebook
-RUN pip install playwright notebook
+# Install poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+# Install python packages
+RUN pip install playwright notebook poetry
 
-# Install Jupyter Notebook
-RUN pip install notebook
 
 # Install Terraform
 RUN apt-get update && \

@@ -25,5 +25,5 @@
     }
   },
   "remoteUser": "vscode",
-  "postCreateCommand": "playwright install"
+  "postCreateCommand": "playwright install && poetry install"
 }
