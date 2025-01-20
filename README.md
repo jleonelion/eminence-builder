@@ -1,6 +1,6 @@
 # My Personal Repo of Agents
 
-## Local Development Environment
+## Local Development Setup
 
 ### Pre-requisites
 
@@ -8,19 +8,27 @@
 1. VSCode 
 1. (Optional) Docker + VSCode Devcontainer extension
 
-### If Not Using Dev Container
+### Setup Python and Poetry
 
-1. Python 3.13
-1. Python Poetry 
-`curl -sSL https://install.python-poetry.org | python3 -`
+1. [Install pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation)
+1. Install python 3.13.1 `pyenv install 3.13.1`
+1. Activate python `pyenv global 3.13.1`
+1. Install poetry `pip install poetry`
+1. Install required packages `poetry install`
+1. Determine path to interpreter `poetry env info --path`
 
+### Setup VS Code
 With current folder for this repo open in VSCode:
 
+1. Install Python and Pylance extensions
 1. Launch VSCode command pallette `ctrl+P`
-1. `>Python: Create Environment...`
-1. Select the correct interpreter
-1. Open Terminal in VSCode
-1. Install dependencies in venv `poetry install`
+1. `>Python: Select Interpreter...`
+1. Enter interpreter path provided by poetry
 
-### Launch Langgraph Server (Using Poetry)
+## Launch Langgraph Server (Using Poetry)
 `poetry run langgraph dev --debug-port 5678`
+
+### Rebuild Poetry Environment
+1. `poetry env remove $(poetry env list | grep Activated | awk '{print $1}')`
+1. `poetry install`
+
