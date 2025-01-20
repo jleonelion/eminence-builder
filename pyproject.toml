@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "chat-langchain"
-version = "0.1.1"
+name = "eminence-builder"
+version = "0.1.0"
 description = ""
-authors = ["SN <6432132+samnoyes@users.noreply.github.com>"]
+authors = ["James Leone <1558486+jleonelion@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{ include = "backend" }]
+packages = [{ include = "agents" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -26,6 +26,7 @@ pillow = "^10.2.0"
 psycopg2-binary = "^2.9.9"
 langchainhub = "^0.1.21"
 tavily-python = ">=0.5.0"
+pytz = "^2024.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.0"
