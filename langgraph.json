@@ -3,7 +3,7 @@
   "graphs": {
     "researcher": "./backend/retrieval_graph/researcher_graph/graph.py:graph",
     "chat": "./backend/retrieval_graph/graph.py:graph",
-    "test": "./scratchpad/graph.py:graph"
+    "generate_post": "./agents/generate_post/graph.py:graph"
   },
   "env": ".env",
   "python_version": "3.11",
