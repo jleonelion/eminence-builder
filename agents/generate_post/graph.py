@@ -1,7 +1,7 @@
-"""Researcher graph used in the conversational retrieval system as a subgraph.
-
-This module defines the core structure and functionality of the researcher graph,
-which is responsible for generating search queries and retrieving relevant documents.
+"""
+The generate post graph is responsible for generating a social media post based 
+on a collection of source content. The source content may be URLs directly provided, 
+or it may need to be located via web search relevant to the desired topic.
 """
 
 from typing import cast

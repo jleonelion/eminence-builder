@@ -25,8 +25,9 @@ With current folder for this repo open in VSCode:
 1. `>Python: Select Interpreter...`
 1. Enter interpreter path provided by poetry
 
-## Launch Langgraph Server (Using Poetry)
-`poetry run langgraph dev --debug-port 5678`
+## Debug via Local Langgraph Server
+1. Launch langgraph server: `poetry run langgraph dev --debug-port 5678`
+1. Connect VSCode to server using: `Attach to LangGraph server`
 
 ### Rebuild Poetry Environment
 1. `poetry env remove $(poetry env list | grep Activated | awk '{print $1}')`

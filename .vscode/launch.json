@@ -13,7 +13,7 @@
             "justMyCode": false
         },
         {
-            "name": "Attach to LangSmith",
+            "name": "Attach to LangGraph server",
             "type": "debugpy",
             "request": "attach",
             "connect": {

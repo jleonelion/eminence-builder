@@ -11,7 +11,7 @@ from datetime import datetime
 from langchain_core.messages import AnyMessage
 from langchain_core.documents import Document
 from langgraph.graph import add_messages, END
-from agents.utils import reduce_docs
+from agents.utils import reduce_docs, unique_list
 
 PostDate = Annotated[Union[datetime, str], field(default_factory=str)]
 
@@ -20,9 +20,6 @@ class Image(TypedDict):
     """Structure to image information"""
     imageUrl: str
     mimeType: str
-
-def unique_list(left: list[str], right: list[str]) -> list[str]:
-    return list(dict.fromkeys(left + right))
 
 @dataclass(kw_only=True)
 class GeneratePostState:

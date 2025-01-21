@@ -144,3 +144,6 @@ def reduce_docs(
                     existing_ids.add(item_id)
 
     return existing_list + new_list
+
+def unique_list(left: list[str], right: list[str]) -> list[str]:
+    return list(dict.fromkeys(left + right))
