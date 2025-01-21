@@ -1,4 +1,4 @@
-"""State management for the verify source graph."""
+"""State management for the verify links graph."""
 
 from dataclasses import dataclass, field
 from typing import Annotated
@@ -9,14 +9,30 @@ from langgraph.graph import add_messages
 
 from agents.utils import reduce_docs, unique_list
 
+# TODO: enhance verify source graph to handle multiple sources
+@dataclass(kw_only=True)
+class VerifyLinksStateTemplate:
+    """State of the verify links graph."""
+
+    links: Annotated[list[str], unique_list] = field(
+        default_factory=list,
+        metadata={
+            "description": "The sources (URL links) of content to verify."
+        },
+    )
+    topic: str = field(
+        metadata={
+            "description": "The topic to verify the content against."
+        },
+    )
 
 @dataclass(kw_only=True)
-class VerifySourceInputState:
+class VerifyLinksState:
     """State of the verify sources graph."""
 
-    url: str = field(
+    link: str = field(
         metadata={
-            "description": "The URL of content to verify."
+            "description": "The source (a URL link) of content to verify."
         },
     )
     topic: str = field(

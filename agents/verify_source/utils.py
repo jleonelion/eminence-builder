@@ -1,5 +1,5 @@
-from agents.verify_source.state import VerifySourceInputState
-from agents.verify_source.configuration import VerifySourceConfiguration
+from agents.verify_source.state import VerifyLinksState
+from agents.verify_source.configuration import VerifyLinksConfiguration
 from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
 from langchain_community.document_loaders import FireCrawlLoader
@@ -34,12 +34,12 @@ class RelevanceEvaluation(BaseModel):
     )
 
 async def get_url_contents(
-    state: VerifySourceInputState, config: VerifySourceConfiguration
+    state: VerifyLinksState, config: VerifyLinksConfiguration
 ) -> UrlContents:
     """Get content from state.url"""
     # TODO: add support for using other loaders defined in the configuration
     loader = FireCrawlLoader(
-        url = state.url,
+        url = state.link,
         mode = "scrape",
         params={
             "formats": ["markdown", "screenshot"],
@@ -55,10 +55,10 @@ async def get_url_contents(
         ])
     else:
         # TODO: attempt to retrieve content from other loaders
-        raise ValueError(f"Failed to fetch content from {state.url}.")
+        raise ValueError(f"Failed to fetch content from {state.link}.")
 
 def get_relevance_eval_system_prompt(
-    state: VerifySourceInputState, config: VerifySourceConfiguration
+    state: VerifyLinksState, config: VerifyLinksConfiguration
 ) -> str:
     """Get content rules."""
     return RELEVANCE_EVALUATION_SYSTEM_PROMPT.format(topic=state.topic)

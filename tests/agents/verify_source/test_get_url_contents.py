@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 from agents.verify_source.utils import get_url_contents, UrlContents
-from agents.verify_source.state import VerifySourceInputState
-from agents.verify_source.configuration import VerifySourceConfiguration
+from agents.verify_source.state import VerifyLinksState
+from agents.verify_source.configuration import VerifyLinksConfiguration
 
 # @pytest.mark.asyncio
 # async def test_get_url_contents():
@@ -39,8 +39,8 @@ from agents.verify_source.configuration import VerifySourceConfiguration
 
 @pytest.mark.asyncio
 async def test_get_firewcrawl():
-    state = VerifySourceInputState(url="https://firecrawl.dev")
-    config = VerifySourceConfiguration()
+    state = VerifyLinksState(link="https://firecrawl.dev")
+    config = VerifyLinksConfiguration()
 
     result = await get_url_contents(state, config)
     # assert isinstance(result, UrlContents)

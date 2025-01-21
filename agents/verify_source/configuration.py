@@ -8,7 +8,7 @@ from typing import Annotated
 from agents.configuration import BaseConfiguration
 
 @dataclass(kw_only=True)
-class VerifySourceConfiguration(BaseConfiguration):
+class VerifyLinksConfiguration(BaseConfiguration):
     """The configuration for the agent."""
     text_only_mode: bool = field(
         default=True,
