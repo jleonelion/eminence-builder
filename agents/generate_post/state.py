@@ -24,9 +24,14 @@ class Image(TypedDict):
 @dataclass(kw_only=True)
 class GeneratePostState:
     """State structure for the generate-post graph."""
-
-    links: Annotated[list[str], unique_list] = field(default_factory=list)
-    """Unique list of links to use as source material for the post content."""
+    # TODO: enhance generate post graph to handle multiple sources
+    # links: Annotated[list[str], unique_list] = field(default_factory=list)
+    # """Unique list of links to use as source material for the post content."""
+    link: str = field(
+        metadata={
+            "description": "URL link to reference content to use for creating the post."
+        },
+    )
     report: str = ""
     # """The report generated on the content of the message.  Used as context for generating the post."""
     # messages: Annotated[list[AnyMessage], add_messages]
