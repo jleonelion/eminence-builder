@@ -14,36 +14,36 @@ async def get_reflections_prompt(
     """Get reflections on the generated post."""
     return ""
 
-async def get_examples(
+def get_examples(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get post examples."""
     return POST_EXAMPLES
 
-async def get_structure_instructions(
+def get_structure_instructions(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get post structure instructions."""
     return POST_STRUCTURE_INSTRUCTIONS
 
-async def get_content_rules(
+def get_content_rules(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get content rules."""
     return POST_CONTENT_RULES
 
-async def build_post_system_prompt(
+def build_post_system_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Build the system prompt for generating a post."""
     return POST_SYSTEM_PROMPT.format(
-            examples=await get_examples(state, config),
-            structure_instructions=await get_structure_instructions(state, config),
-            content_rules=await get_content_rules(state, config),
-            reflection=await get_reflections_prompt(state, config)
+            examples=get_examples(state, config),
+            structure_instructions=get_structure_instructions(state, config),
+            content_rules=get_content_rules(state, config),
+            reflection=get_reflections_prompt(state, config)
     )
 
-async def build_report_prompt(
+def build_report_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Format report of information used to generate a post."""
@@ -59,28 +59,28 @@ And here is the link to the content I'd like promoted:
 </link>
     """.format(report=state.report, link=state.relevant_links[0])
 
-async def build_report_system_prompt(
+def build_report_system_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get the system prompt for generating a post."""
     return REPORT_SYSTEM_PROMPT.format(
-        content_rules=await get_report_content_rules(state, config),
-        structure_guidelines=await get_report_structure_guidelines(state, config)
+        content_rules=get_report_content_rules(state, config),
+        structure_guidelines=get_report_structure_guidelines(state, config)
     )
 
-async def get_report_content_rules(
+def get_report_content_rules(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get content rules."""
     return REPORT_CONTENT_RULES
 
-async def get_report_structure_guidelines(
+def get_report_structure_guidelines(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get content rules."""
     return REPORT_STRUCTURE_GUIDELINES
 
-async def build_report_content_prompt(
+def build_report_content_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get content rules."""
