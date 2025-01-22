@@ -1,5 +1,5 @@
-from agents.verify_source.state import VerifySingleLinkState
-from agents.verify_source.configuration import VerifyLinksConfiguration
+from agents.verify_links.state import VerifySingleLinkState
+from agents.verify_links.configuration import VerifyLinksConfiguration
 from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
 from langchain_community.document_loaders import FireCrawlLoader

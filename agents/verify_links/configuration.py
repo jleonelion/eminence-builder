@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Annotated
-
 from agents.configuration import BaseConfiguration
 
 @dataclass(kw_only=True)

@@ -19,7 +19,7 @@ from agents.generate_post.configuration import GeneratePostConfiguration
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from agents.generate_post.utils import *
-from agents.verify_source.graph import graph as verify_links_graph
+from agents.verify_links.graph import graph as verify_links_graph
 
 async def generate_report(
     state: GeneratePostState, *, config: RunnableConfig

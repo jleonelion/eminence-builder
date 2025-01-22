@@ -5,9 +5,9 @@ is relevant to the topic defined as an input.
 from langgraph.constants import END, START, Send
 from langgraph.graph import StateGraph
 from langchain_core.runnables import RunnableConfig
-from agents.verify_source.configuration import VerifyLinksConfiguration
-from agents.verify_source.state import VerifySingleLinkState, VerifyLinksState
-from agents.verify_source.utils import get_url_contents, RelevanceEvaluation, get_relevance_eval_system_prompt
+from agents.verify_links.configuration import VerifyLinksConfiguration
+from agents.verify_links.state import VerifySingleLinkState, VerifyLinksState
+from agents.verify_links.utils import get_url_contents, RelevanceEvaluation, get_relevance_eval_system_prompt
 from agents.utils import load_chat_model
 from langchain_core.messages import SystemMessage, HumanMessage
 
