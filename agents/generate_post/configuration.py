@@ -23,11 +23,22 @@ class GeneratePostConfiguration(BaseConfiguration):
             "description": "The language model used for generating posts Should be in the form: provider/model-name."
         },
     )
-
     report_model: str = field(
         default="openai/gpt-4o-mini",
         # default="anthropic/claude-3-sonnet-20240229",
         metadata={
             "description": "The language model used for generating information reports that act as input to posts. Should be in the form: provider/model-name."
+        },
+    )
+    max_post_length: int = field(
+        default=1000,
+        metadata={
+            "description": "The maximum length of the post."
+        },
+    )
+    max_condense_count: int = field(
+        default=3,
+        metadata={
+            "description": "The maximum iterations spent condensing post size."
         },
     )

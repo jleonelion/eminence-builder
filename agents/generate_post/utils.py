@@ -43,6 +43,20 @@ def build_post_system_prompt(
             reflections_prompt=get_reflections_prompt(state, config)
     )
 
+def build_condense_post_system_prompt(
+    state: GeneratePostState, config: GeneratePostConfiguration, original_post_length: int
+) -> str:
+    """Build the system prompt for generating a post."""
+    return CONDENSE_POST_PROMPT.format(
+            report=state.report,
+            link="\n".join(state.relevant_links), # Concatenate multiple links with newline
+            structure_instructions=get_structure_instructions(state, config),
+            content_rules=get_content_rules(state, config),
+            reflections_prompt=get_reflections_prompt(state, config),
+            original_post_length=original_post_length,
+            max_post_length=config.max_post_length
+    )
+
 def build_report_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
@@ -122,3 +136,8 @@ def parse_report(input_string: str) -> str:
     else:
         # TODO: log warning
         return input_string
+
+def remove_urls(input_string: str) -> str:
+    """Remove all URLs and multi-spaces from the input string."""
+    return re.sub(r'\s+', ' ', re.sub(r'http[s]?://\S+', '', input_string)).strip()
+    

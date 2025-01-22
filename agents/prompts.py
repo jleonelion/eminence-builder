@@ -162,6 +162,50 @@ POST_CONTENT_RULES = (
 - ALWAYS include the link to the content being promoted in the call to action section of the post.
     """
 )
+CONDENSE_POST_PROMPT = (
+    """
+You're a highly skilled marketer, working on crafting thoughtful and engaging content for LinkedIn posts.
+You wrote a post for the LinkedIn, however it's a bit too long, and thus needs to be condensed.
+
+You wrote this marketing report on the content which you used to write the original post:
+<report>
+{report}
+</report>
+
+And the content has the following link that should ALWAYS be included in the final post:
+<link>
+{link}
+</link>
+
+You should not be worried by the length of the link, as that will be shortened before posting. Only focus on condensing the length of the post content itself.
+
+Here are the rules and structure you used to write the original post, which you should use when condensing the post now:
+<rules-and-structure>
+
+{structure_instructions}
+
+<rules>
+{content_rules}
+</rules>
+
+{reflections_prompt}
+
+</rules-and-structure>
+
+Given the marketing report, link, rules and structure, please condense the post down to roughly {max_post_length} characters (not including the link). The original post was {original_post_length} characters long.
+Ensure you keep the same structure, and do not omit any crucial content outright.
+
+Follow this flow to rewrite the post in a condensed format:
+
+<rewriting-flow>
+1. Carefully read over the report, original post provided by the user below, the rules and structure.
+2. Write down your thoughts about where and how you can condense the post inside <thinking> tags. This should contain details you think will help make the post more engaging, snippets you think can be condensed, etc. This should be the first text you write.
+3. Using all the context provided to you above, the original post, and your thoughts, rewrite the post in a condensed format inside <post> tags. This should be the last text you write.
+</rewriting-flow>
+
+Follow all rules and instructions outlined above. The user message below will provide the original post. Remember to have fun while rewriting it! Go!
+    """
+)
 
 REPORT_SYSTEM_PROMPT = (
     """

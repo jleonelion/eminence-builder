@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, patch
-from agents.verify_source.utils import get_url_contents, UrlContents
-from agents.verify_source.state import VerifySingleLinkState
-from agents.verify_source.configuration import VerifyLinksConfiguration
+from agents.verify_links.utils import get_url_contents, UrlContents
+from agents.verify_links.state import VerifySingleLinkState
+from agents.verify_links.configuration import VerifyLinksConfiguration
 
 # @pytest.mark.asyncio
 # async def test_get_url_contents():

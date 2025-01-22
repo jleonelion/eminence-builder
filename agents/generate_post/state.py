@@ -36,8 +36,7 @@ class GeneratePostState:
         },
     )
     report: str = ""
-    # """The report generated on the content of the message.  Used as context for generating the post."""
-    # messages: Annotated[list[AnyMessage], add_messages]
+    messages: Annotated[list[AnyMessage], add_messages] = field(default_factory=list)
     """Messages including the initial user prompt, feedback from the editor, and feedback from user"""
     page_contents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Page content used in the verification nodes.  Will be used in the report generation node."""
