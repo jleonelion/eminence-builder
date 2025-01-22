@@ -11,7 +11,7 @@ from agents.utils import reduce_docs, unique_list
 
 # TODO: enhance verify source graph to handle multiple sources
 @dataclass(kw_only=True)
-class VerifyLinksStateTemplate:
+class VerifyLinksState:
     """State of the verify links graph."""
 
     links: Annotated[list[str], unique_list] = field(
@@ -25,9 +25,19 @@ class VerifyLinksStateTemplate:
             "description": "The topic to verify the content against."
         },
     )
+    """Messages including the initial user prompt, feedback from the editor, and feedback from user"""
+    page_contents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
+    """Page content used in the verification nodes.  Will be used in the report generation node."""
+    relevant_links: Annotated[list[str], unique_list] = field(default_factory=list)
+    # TODO: implement image options
+    #     imageOptions: Annotation<string[]>({
+    #     reducer: (_state, update) => update,
+    #     default: () => [],
+    #   }),
+
 
 @dataclass(kw_only=True)
-class VerifyLinksState:
+class VerifySingleLinkState:
     """State of the verify sources graph."""
 
     link: str = field(
@@ -41,16 +51,11 @@ class VerifyLinksState:
         },
     )
 
-@dataclass(kw_only=True)
-class VerifyGeneralSourceReturnState:
-    """When the source url points to a general web page, this is returned."""
+# @dataclass(kw_only=True)
+# class VerifyGeneralSourceReturnState:
+#     """When the source url points to a general web page, this is returned."""
 
-    relevant_links: Annotated[list[str], unique_list] = field(default_factory=list)
-    """links referenced in the web page that are relevant to the topic"""
-    page_contents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
-    """Contents of the web page that was verified"""
-    # TODO: implement image options
-#     imageOptions: Annotation<string[]>({
-#     reducer: (_state, update) => update,
-#     default: () => [],
-#   }),
+#     relevant_links: Annotated[list[str], unique_list] = field(default_factory=list)
+#     """links referenced in the web page that are relevant to the topic"""
+#     page_contents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
+#     """Contents of the web page that was verified"""

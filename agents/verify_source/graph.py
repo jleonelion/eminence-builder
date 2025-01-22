@@ -1,19 +1,24 @@
 """
-Verify source graph examines the content at a specific url and determines if that material
+Verify links graph examines the content at a provided urls (the links) and determines if that material
 is relevant to the topic defined as an input.
 """
-from langgraph.constants import END, START
+from langgraph.constants import END, START, Send
 from langgraph.graph import StateGraph
 from langchain_core.runnables import RunnableConfig
 from agents.verify_source.configuration import VerifyLinksConfiguration
-from agents.verify_source.state import VerifyLinksState, VerifyGeneralSourceReturnState
+from agents.verify_source.state import VerifySingleLinkState, VerifyLinksState
 from agents.verify_source.utils import get_url_contents, RelevanceEvaluation, get_relevance_eval_system_prompt
 from agents.utils import load_chat_model
 from langchain_core.messages import SystemMessage, HumanMessage
 
+def route_verifications(state: VerifyLinksState):
+    """Route the type of link to the appropriate verification function."""
+    # TODO: route to additional link verification functions
+    return [Send("verify_general", VerifySingleLinkState(link=l, topic=state.topic)) for l in state.links]
+
 async def verify_general(
-    state: VerifyLinksState, *, config: RunnableConfig
-) -> VerifyGeneralSourceReturnState:
+    state: VerifySingleLinkState, *, config: RunnableConfig
+) -> VerifyLinksState:
     """Verify general web source content against the topic."""
 
     config = VerifyLinksConfiguration.from_runnable_config(config)
@@ -49,7 +54,7 @@ async def verify_general(
 # Define the graph
 builder = StateGraph(VerifyLinksState, config_schema=VerifyLinksConfiguration)
 builder.add_node(verify_general)
-builder.add_edge(START, "verify_general")
+builder.add_conditional_edges(START, route_verifications, ["verify_general"])
 builder.add_edge("verify_general", END)
 # Compile into a graph object that you can invoke and deploy.
 graph = builder.compile()

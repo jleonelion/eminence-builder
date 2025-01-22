@@ -1,4 +1,4 @@
-from agents.verify_source.state import VerifyLinksState
+from agents.verify_source.state import VerifySingleLinkState
 from agents.verify_source.configuration import VerifyLinksConfiguration
 from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
@@ -34,7 +34,7 @@ class RelevanceEvaluation(BaseModel):
     )
 
 async def get_url_contents(
-    state: VerifyLinksState, config: VerifyLinksConfiguration
+    state: VerifySingleLinkState, config: VerifyLinksConfiguration
 ) -> UrlContents:
     """Get content from state.url"""
     # TODO: add support for using other loaders defined in the configuration
@@ -58,7 +58,7 @@ async def get_url_contents(
         raise ValueError(f"Failed to fetch content from {state.link}.")
 
 def get_relevance_eval_system_prompt(
-    state: VerifyLinksState, config: VerifyLinksConfiguration
+    state: VerifySingleLinkState, config: VerifyLinksConfiguration
 ) -> str:
     """Get content rules."""
     return RELEVANCE_EVALUATION_SYSTEM_PROMPT.format(topic=state.topic)
