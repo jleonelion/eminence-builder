@@ -24,12 +24,15 @@ class Image(TypedDict):
 @dataclass(kw_only=True)
 class GeneratePostState:
     """State structure for the generate-post graph."""
-    # TODO: enhance generate post graph to handle multiple sources
-    # links: Annotated[list[str], unique_list] = field(default_factory=list)
-    # """Unique list of links to use as source material for the post content."""
-    link: str = field(
+    topic: str = field(
         metadata={
-            "description": "URL link to reference content to use for creating the post."
+            "description": "The topic to verify the content against."
+        },
+    )
+    links: Annotated[list[str], unique_list] = field(
+        default_factory=list,
+        metadata={
+            "description": "The sources (URL links) of content to verify."
         },
     )
     report: str = ""

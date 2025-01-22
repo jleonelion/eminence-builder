@@ -13,16 +13,15 @@ from agents.utils import reduce_docs, unique_list
 @dataclass(kw_only=True)
 class VerifyLinksState:
     """State of the verify links graph."""
-
+    topic: str = field(
+        metadata={
+            "description": "The topic to verify the content against."
+        },
+    )
     links: Annotated[list[str], unique_list] = field(
         default_factory=list,
         metadata={
             "description": "The sources (URL links) of content to verify."
-        },
-    )
-    topic: str = field(
-        metadata={
-            "description": "The topic to verify the content against."
         },
     )
     """Messages including the initial user prompt, feedback from the editor, and feedback from user"""

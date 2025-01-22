@@ -10,6 +10,7 @@ from agents.verify_links.state import VerifySingleLinkState, VerifyLinksState
 from agents.verify_links.utils import get_url_contents, RelevanceEvaluation, get_relevance_eval_system_prompt
 from agents.utils import load_chat_model
 from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.documents import Document
 
 def route_verifications(state: VerifyLinksState):
     """Route the type of link to the appropriate verification function."""
@@ -41,7 +42,7 @@ async def verify_general(
         # return the relevant links and page contents for use in crafting the post
         return {
             "relevant_links": [state.link],
-            "page_contents": [{"content": url_contents.content}], 
+            "page_contents": [Document(page_content=url_contents.content)], 
             # TODO: include image urls
         }
     else:

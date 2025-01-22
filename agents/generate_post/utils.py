@@ -40,7 +40,7 @@ def build_post_system_prompt(
             examples=get_examples(state, config),
             structure_instructions=get_structure_instructions(state, config),
             content_rules=get_content_rules(state, config),
-            reflection=get_reflections_prompt(state, config)
+            reflections_prompt=get_reflections_prompt(state, config)
     )
 
 def build_report_prompt(
