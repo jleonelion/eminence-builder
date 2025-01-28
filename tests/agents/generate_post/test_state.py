@@ -20,7 +20,7 @@ def test_initialization():
         relevant_links=["link1", "link2"],
         post="Test post",
         schedule_date="p1",
-        userResponse="Test response",
+        user_response="Test response",
         next="schedulePost",
         image=Image(imageUrl="http://example.com/image.jpg", mimeType="image/jpeg"),
         condense_count=1
@@ -34,7 +34,7 @@ def test_initialization():
     assert state.relevant_links == ["link1", "link2"]
     assert state.post == "Test post"
     assert state.schedule_date == "p1"
-    assert state.userResponse == "Test response"
+    assert state.user_response == "Test response"
     assert state.next == "schedulePost"
     assert state.image["imageUrl"] == "http://example.com/image.jpg"
     assert state.image["mimeType"] == "image/jpeg"

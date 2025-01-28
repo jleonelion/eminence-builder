@@ -4,7 +4,7 @@ on a collection of source content. The source content may be URLs directly provi
 or it may need to be located via web search relevant to the desired topic.
 """
 
-from typing import cast
+from typing import Dict, cast
 
 from langchain_core.documents import Document
 from langchain_core.runnables import RunnableConfig
@@ -16,10 +16,46 @@ import random
 from agents.utils import load_chat_model
 from agents.generate_post.state import GeneratePostState
 from agents.generate_post.configuration import GeneratePostConfiguration
+from agents.generate_post.interrupt import *
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
+from langgraph.types import interrupt, Command
 from agents.generate_post.utils import *
 from agents.verify_links.graph import graph as verify_links
+import pytz
+from datetime import datetime
+
+@dataclass(kw_only=True)
+class PostInformation:
+    topic: str
+    links: list[str]
+
+async def parse_post_request(
+    state: GeneratePostState, *, config: RunnableConfig
+) -> GeneratePostState:
+    """Parse most recent Human message to determine the post topic and associated links."""
+    
+    config = GeneratePostConfiguration.from_runnable_config(config)
+    # call model to generate the report
+    model = load_chat_model(config.parse_request_model)
+    model = model.with_structured_output(PostInformation)
+    # extract last elements of type HumanMessage from state.messages list
+    human_messages = [msg for msg in state.messages if isinstance(msg, HumanMessage)]
+    if not human_messages:
+        raise ValueError("No human messages found.")
+    
+    response = await model.ainvoke(
+        [
+            SystemMessage(get_parse_post_request_prompt(state, config)),
+            human_messages[-1],
+        ]
+    )
+    if not response["topic"]:
+        raise ValueError("Could not determine topic.")
+    return {
+        "topic": response["topic"],
+        "links": response["links"],
+    }
 
 async def generate_report(
     state: GeneratePostState, *, config: RunnableConfig
@@ -105,12 +141,101 @@ async def human(
         raise ValueError("No post found.")
     
     config = GeneratePostConfiguration.from_runnable_config(config)
-    default_date = state.schedule_date or get_next_saturday()
-    # TODO: Implement human-in-the-loop logic
-    return {
-        "schedule_date": default_date,
-        "post": state.post,
+    default_date_string = build_default_date(state, config)
+
+    request = HumanInterrupt = {
+        "action_request": {
+            "action": "Schedule LinkedIn posts",
+            "args": {
+                "post": state.post,
+                "default_date": default_date_string,
+            },
+            "config": {
+                "allow_ignore": True,
+                "allow_respond": True,
+                "allow_edit": True,
+                "allow_accept": True
+            },
+            "description": build_interrupt_desc(state, config)
+        }
     }
+    response = interrupt([request])
+    response = response[0] if isinstance(response, list) else response
+    response = cast(HumanResponse, response)
+
+    if response["type"] == "ignore":
+        return {
+            "next": END,
+        }
+
+    if not response["args"]:
+        # TODO log error
+        raise ValueError(f"Unexpected response args: {response["args"]}.  Must be defined")
+    
+    if response["type"] == "response":
+        route_determination = await route_determination(
+            post=state.post,
+            date_or_priority=default_date_string,
+            user_response=response["args"],
+        )
+        if route_determination["route"] == "rewrite_post":
+            return {
+                "user_response": response["args"],
+                "next": "rewrite_post",
+            }
+        elif route_determination["route"] == "update_date":
+            return {
+                "user_response": response["args"],
+                "next": "update_schedule_date",
+            }
+        else:
+            return {
+                "user_response": response["args"],
+                "next": "unknown_response",
+            }
+    
+    # make sure response.args is a dict with key 'args'
+    if "args" not in response["args"]:
+        # TODO log error
+        raise ValueError(f"Unexpected response args value: {response["args"]}.  Must be defined")
+    # Cast to the expected type
+    cast_args: Dict[str, str] = response["args"]["args"]
+
+    # if 'post' key in cast_args is not defined, then raise an error
+    if "post" not in cast_args:
+        # TODO log error
+        raise ValueError(f"post key not defined in response args: {cast_args}")
+    else:
+        response_post = cast_args["post"]
+    
+    post_date = parse_date(cast_args.get("date", default_date_string))
+    
+    if not post_date:
+        # TODO log error
+        raise ValueError(f"Invalid date format: {cast_args.get('date', default_date_string)}")
+
+    # TODO: implement image management
+    # let imageState: { imageUrl: string; mimeType: string } | undefined =
+    #     undefined;
+    #   if (!isTextOnlyMode) {
+    #     const processedImage = await processImageInput(castArgs.image);
+    #     if (processedImage && processedImage !== "remove") {
+    #       imageState = processedImage;
+    #     } else if (processedImage === "remove") {
+    #       imageState = undefined;
+    #     } else {
+    #       imageState = state.image;
+    #     }
+    #   }
+
+    return {
+        "next": "schedule_post",
+        "schedule_date": post_date,
+        "post": response_post,
+        "user_response": None,
+        # "image": imageState,
+    }
+
 
 async def find_images(
     state: GeneratePostState, *, config: RunnableConfig
@@ -141,13 +266,15 @@ def route_condense_human_images(
 
 # Define the graph
 builder = StateGraph(GeneratePostState, config_schema=GeneratePostConfiguration)
+builder.add_node(parse_post_request)
 builder.add_node("verify_links", verify_links)
 builder.add_node(generate_post)
 builder.add_node(generate_report)
 builder.add_node(condense_post)
 builder.add_node(human)
 builder.add_node(find_images)
-builder.add_edge(START, "verify_links")
+builder.add_edge(START, "parse_post_request")
+builder.add_edge("parse_post_request", "verify_links")
 builder.add_edge("verify_links", "generate_report")
 builder.add_edge("generate_report", "generate_post")
 builder.add_edge("generate_post", "condense_post")

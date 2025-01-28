@@ -1,0 +1,33 @@
+[
+    {
+        "type": "ignore",
+        "args": "Nothing to see here"
+    },
+    {
+        "type": "accept",
+        "args": {
+            "args": {
+                "post": "🔒 Understanding TLS/SSL Protocols\n\nDiscover **Transport Layer Security (TLS)** and **Secure Sockets Layer (SSL)**, essential for secure online communications. These protocols encrypt data between clients and servers, ensuring privacy, integrity, and authenticity.\n\nKey highlights:\n- **TLS 1.3**: Boosts security and reduces handshake latency.\n- **Public Key Cryptography**: Employs key pairs for secure exchanges.\n- **Cipher Suites**: Establish strong encryption and authentication standards.\n\nUncover the intricacies of the TLS/SSL handshake and key generation in this insightful article! 🔗 [Read more here](https://dev.to/adityabhuyan/understanding-the-tlsssl-protocol-how-ciphers-and-keys-are-generated-3a6n)\n\n#SSL #WebSecurity #Cybersecurity #Encryption",
+                "date": "02/01/2025 01:57 PM PST"
+            }
+        }
+    }
+    {
+        "type": "response",
+        "args": {
+            "args": {
+                "post": "TODO",
+                "date": "02/01/2025 01:57 PM PST"
+            }
+        }
+    }
+    {
+        "type": "edit",
+        "args": {
+            "args": {
+                "post": "TODO",
+                "date": "02/01/2025 01:57 PM PST"
+            }
+        }
+    }
+]
