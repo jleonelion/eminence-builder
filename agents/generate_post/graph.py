@@ -76,7 +76,7 @@ async def generate_report(
     }
 
 async def generate_post(
-    state: GeneratePostState, *, config: RunnableConfig
+    state: GeneratePostState, *, config: RunnableConfig, store: BaseStore
 ) -> GeneratePostState:
     """Create post content."""
     
@@ -90,7 +90,7 @@ async def generate_post(
     model = load_chat_model(config.post_model)
     response = await model.ainvoke(
         [
-            SystemMessage(build_post_system_prompt(state, config)),
+            SystemMessage(build_post_system_prompt(state, config, store)),
             HumanMessage(build_report_prompt(state, config)),
         ]
     )
@@ -105,7 +105,7 @@ async def generate_post(
     }
 
 async def condense_post(
-    state: GeneratePostState, *, config: RunnableConfig
+    state: GeneratePostState, *, config: RunnableConfig, store: BaseStore
 ) -> GeneratePostState:
     """Condense post content."""
     
@@ -123,7 +123,7 @@ async def condense_post(
     model = load_chat_model(config.post_model)
     response = await model.ainvoke(
         [
-            SystemMessage(build_condense_post_system_prompt(state, config, original_post_length)),
+            SystemMessage(build_condense_post_system_prompt(state=state, config=config, original_post_length=original_post_length, store=store)),
             HumanMessage(f"Here is the the post I'd like to condense: {state.post}"),
         ]
     )
@@ -172,11 +172,13 @@ async def human(
         # TODO log error
         raise ValueError(f"Unexpected response args: {response["args"]}.  Must be defined")
     
+    # TODO would prefer this logic be in router function
     if response["type"] == "response":
-        route_determination = await route_determination(
+        route_determination = await determine_next_node(
             post=state.post,
             date_or_priority=default_date_string,
             user_response=response["args"],
+            config=config,
         )
         if route_determination["route"] == "rewrite_post":
             return {
@@ -236,6 +238,28 @@ async def human(
         # "image": imageState,
     }
 
+async def rewrite_post(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:
+    """Rewrite the post content."""
+    if not state.post:
+        raise ValueError("No post found.")
+    if not state.user_response:
+        raise ValueError("No user response found.")
+    
+    config = GeneratePostConfiguration.from_runnable_config(config)
+    model = load_chat_model(config.rewrite_model, config.rewrite_model_kwargs)
+    rewrite_post_prompt = await build_rewrite_post_prompt(state, config, store)
+    response = await model.ainvoke(
+        [
+            SystemMessage(rewrite_post_prompt),
+            HumanMessage(state.user_response),
+        ]
+    )
+    # TODO call llm to identify and store a new reflection rule basd on original post, rewritten post, and user response
+    return {
+        "post": parse_post(response.content),
+        "next": None,
+        "user_response": None,
+    }
 
 async def find_images(
     state: GeneratePostState, *, config: RunnableConfig
@@ -243,6 +267,18 @@ async def find_images(
     """Locate images for post."""
     
     # TODO: Implement image management
+    return {
+        "post": state.post,
+    }
+
+async def schedule_post(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:
+    # TODO: Implement post scheduling
+    return {
+        "post": state.post,
+    }
+
+async def update_schedule_date(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:
+    # TODO: Implement post scheduling
     return {
         "post": state.post,
     }
@@ -264,6 +300,17 @@ def route_condense_human_images(
         # return "find_images"
         return "human"
 
+def route_human_response(
+    state: GeneratePostState, config: RunnableConfig
+) -> Literal["schedule_post", "rewrite_post", "update_schedule_date", "human", "__end__"]: # have to use string literal for END
+    """Route after human."""
+    
+    if state.next:
+        if state.next == "unknown_response":
+            return "human"
+        return state.next
+    return END
+
 # Define the graph
 builder = StateGraph(GeneratePostState, config_schema=GeneratePostConfiguration)
 builder.add_node(parse_post_request)
@@ -273,14 +320,20 @@ builder.add_node(generate_report)
 builder.add_node(condense_post)
 builder.add_node(human)
 builder.add_node(find_images)
+builder.add_node(rewrite_post)
+builder.add_node(schedule_post)
+builder.add_node(update_schedule_date)
 builder.add_edge(START, "parse_post_request")
 builder.add_edge("parse_post_request", "verify_links")
 builder.add_edge("verify_links", "generate_report")
 builder.add_edge("generate_report", "generate_post")
 builder.add_edge("generate_post", "condense_post")
 builder.add_conditional_edges("condense_post", route_condense_human_images)
-builder.add_edge("human", END)
-builder.add_edge("find_images", END)
+builder.add_edge("find_images", "human")
+builder.add_edge("rewrite_post", "human")
+builder.add_conditional_edges("human", route_human_response)
+builder.add_edge("update_schedule_date", "human")
+builder.add_edge("schedule_post", END)
 
 # Compile into a graph object that you can invoke and deploy.
 graph = builder.compile()

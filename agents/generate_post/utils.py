@@ -7,13 +7,27 @@ from agents.generate_post.configuration import GeneratePostConfiguration
 from agents.generate_post.state import GeneratePostState, PostDate
 from agents.prompts import *
 from agents.utils import *
+from langchain_core.runnables import RunnableConfig
+from langgraph.store.base import BaseStore, Item
 
-# TODO: Implement the following functions
-async def get_reflections_prompt(
-    state: GeneratePostState, config: GeneratePostConfiguration
+async def build_reflections_prompt(
+    state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore
 ) -> str:
     """Get reflections on the generated post."""
-    return ""
+    reflections = await get_stored_reflections(store)
+    if not reflections:
+        # return empty string if no reflection rules in store
+        return ""
+
+    # converty relfections to string with - before each reflection
+    reflections_string = "\n- ".join(reflections)
+    return REFLECTIONS_PROMPT.format(reflections=reflections_string)
+
+async def build_rewrite_post_prompt(
+    state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore
+) -> str:
+    """Get reflections on the generated post."""
+    return REWRITE_POST_PROMPT.format(reflections_prompt=await build_reflections_prompt(state, config, store), original_post=state.post)
 
 def get_examples(
     state: GeneratePostState, config: GeneratePostConfiguration
@@ -34,18 +48,18 @@ def get_content_rules(
     return POST_CONTENT_RULES
 
 def build_post_system_prompt(
-    state: GeneratePostState, config: GeneratePostConfiguration
+    state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore
 ) -> str:
     """Build the system prompt for generating a post."""
     return POST_SYSTEM_PROMPT.format(
             examples=get_examples(state, config),
             structure_instructions=get_structure_instructions(state, config),
             content_rules=get_content_rules(state, config),
-            reflections_prompt=get_reflections_prompt(state, config)
+            reflections_prompt=build_reflections_prompt(state, config, store)
     )
 
 def build_condense_post_system_prompt(
-    state: GeneratePostState, config: GeneratePostConfiguration, original_post_length: int
+    state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore, original_post_length: int
 ) -> str:
     """Build the system prompt for generating a post."""
     return CONDENSE_POST_PROMPT.format(
@@ -53,7 +67,7 @@ def build_condense_post_system_prompt(
             link="\n".join(state.relevant_links), # Concatenate multiple links with newline
             structure_instructions=get_structure_instructions(state, config),
             content_rules=get_content_rules(state, config),
-            reflections_prompt=get_reflections_prompt(state, config),
+            reflections_prompt=build_reflections_prompt(state, config, store),
             original_post_length=original_post_length,
             max_post_length=config.max_post_length
     )
@@ -163,6 +177,7 @@ The date the post will be scheduled for may be edited, but it must follow the fo
 Here is the report that was generated for the posts:
 {report}
 """
+
 def build_interrupt_desc(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
@@ -272,4 +287,11 @@ def parse_report(input_string: str) -> str:
 def remove_urls(input_string: str) -> str:
     """Remove all URLs and multi-spaces from the input string."""
     return re.sub(r'\s+', ' ', re.sub(r'http[s]?://\S+', '', input_string)).strip()
-    
+
+RULESET_NAMESPACE = ("reflection_rules", "rules")
+RULESET_KEY = "ruleset"
+
+async def get_stored_reflections(store: BaseStore) -> list[str]:
+    """Get reflections from storage."""
+    ruleset = await store.aget(RULESET_NAMESPACE, key=RULESET_KEY)
+    return ruleset.value if ruleset else []

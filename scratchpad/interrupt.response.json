@@ -14,12 +14,7 @@
     }
     {
         "type": "response",
-        "args": {
-            "args": {
-                "post": "TODO",
-                "date": "02/01/2025 01:57 PM PST"
-            }
-        }
+        "args": "Remove the key points section, remove the statement about 'vital balance', and add a question to engage the reader.\nDo you think the attacker was cyber hoodlums, tech competitors, or nation-state actors?"
     }
     {
         "type": "edit",

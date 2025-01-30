@@ -46,7 +46,7 @@ def build_route_content_prompt(
         user_response=user_response,
     )
 
-async def route_response(
+async def determine_next_node(
     post: str,
     date_or_priority: str,
     user_response: str,

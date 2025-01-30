@@ -328,3 +328,29 @@ Explanation: The user is engaging in general conversation, not a request to chan
 
 Remember to always base your decision on the actual content of the user's response, not on these examples.
 """
+
+REFLECTIONS_PROMPT = (
+"""
+You have also been provided with a handful of reflections based on previous requests the user has made.
+Be sure to follow these rules when writing this new post so the user does not need to repeat their requests:
+<reflections>
+{reflections}
+</reflections>
+"""
+)
+
+REWRITE_POST_PROMPT = (
+"""
+You're a highly regarded marketing employee, working on crafting thoughtful and engaging content for the LinkedIn and Twitter pages.
+You wrote a post for the LinkedIn and Twitter pages, however your boss has asked for some changes to be made before it can be published.
+
+The original post you wrote is as follows:
+<original-post>
+{original_post}
+</original-post>
+
+{reflections_prompt}
+
+Listen to your boss closely, and make the necessary changes to the post. You should respond ONLY with the updated post, with no additional information, or text before or after the post.
+"""
+)

@@ -37,6 +37,18 @@ class GeneratePostConfiguration(BaseConfiguration):
             "description": "The language model used for generating information reports that act as input to posts. Should be in the form: provider/model-name."
         },
     )
+    rewrite_model: str = field(
+        default="openai/gpt-4o-mini",
+        metadata={
+            "description": "The language model used for rewriting posts. Should be in the form: provider/model-name."
+        },
+    )
+    rewrite_model_kwargs: dict = field(
+        default_factory=dict,
+        metadata={
+            "description": "Keyword arguments to pass to the rewrite model."
+        },
+    )
     route_model: str = field(
         default="openai/gpt-4o-mini",
         # default="anthropic/claude-3-sonnet-20240229",

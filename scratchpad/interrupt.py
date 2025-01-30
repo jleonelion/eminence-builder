@@ -3,6 +3,8 @@ from typing import Annotated, Optional, Literal, Union, cast
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command, interrupt
+from langchain_core.runnables import RunnableConfig
+from langgraph.store.base import BaseStore, Item
 
 class State(TypedDict):
     # The operator.add reducer function makes this append-only
@@ -28,9 +30,16 @@ class HumanResponse(TypedDict):
     type: Literal['accept', 'ignore', 'response', 'edit']
     args: Union[None, str, ActionRequest]
 
-async def human_review(state: State):
+async def human_review(state: State, *, config: RunnableConfig, store: BaseStore):
     """Invoke human-in-the-loop for post content."""
-    
+
+    ruleset = await store.aget(("reflection_rules", "rules"), key="ruleset")
+
+    if not ruleset:
+        await store.aput(("reflection_rules", "rules"), key="ruleset", value=["a simple reflection rule", "a more complex reflection rule"])
+
+    ruleset = await store.aget(("reflection_rules", "rules"), key="ruleset")
+
     request = HumanInterrupt = {
         "action_request": {
             "action": "Schedule LinkedIn posts",

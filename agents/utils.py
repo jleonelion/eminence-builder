@@ -64,11 +64,12 @@ def format_docs(docs: Optional[list[Document]]) -> str:
 </documents>"""
 
 
-def load_chat_model(fully_specified_name: str) -> BaseChatModel:
+def load_chat_model(fully_specified_name: str, model_kwargs: Optional[dict[str, Any]] = None) -> BaseChatModel:
     """Load a chat model from a fully specified name.
 
     Args:
         fully_specified_name (str): String in the format 'provider/model'.
+        model_kwargs (Optional[dict[str, Any]]): Additional keyword arguments for the model.
     """
     if "/" in fully_specified_name:
         provider, model = fully_specified_name.split("/", maxsplit=1)
@@ -76,9 +77,14 @@ def load_chat_model(fully_specified_name: str) -> BaseChatModel:
         provider = ""
         model = fully_specified_name
 
-    model_kwargs = {"temperature": 0}
+    if model_kwargs is None:
+        model_kwargs = {"temperature": 0}
+    else:
+        model_kwargs.setdefault("temperature", 0)
+
     if provider == "google_genai":
         model_kwargs["convert_system_message_to_human"] = True
+
     return init_chat_model(model, model_provider=provider, **model_kwargs)
 
 
