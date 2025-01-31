@@ -24,6 +24,8 @@ from agents.generate_post.utils import *
 from agents.verify_links.graph import graph as verify_links
 import pytz
 from datetime import datetime
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 @dataclass(kw_only=True)
 class PostInformation:
@@ -272,9 +274,23 @@ async def find_images(
     }
 
 async def schedule_post(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:
-    # TODO: Implement post scheduling
+    """Schedule the post."""
+
+    config = GeneratePostConfiguration.from_runnable_config(config)
+
+    client = MongoClient(config.mongo_url)
+    db = client[config.mongo_db]
+    collection = db[config.mongo_collection_linkedin_posts]
+    scheduled_post = {
+        "topic": state.topic,
+        "post": state.post, 
+        "scheduled_date": calc_scheduled_date(state.schedule_date), 
+        "status": "pending"
+    }
+    result = collection.insert_one(scheduled_post)
+
     return {
-        "post": state.post,
+        "object_id": result.inserted_id,
     }
 
 async def update_schedule_date(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:

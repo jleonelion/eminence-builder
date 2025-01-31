@@ -29,6 +29,8 @@ tavily-python = ">=0.5.0"
 pytz = "^2024.2"
 firecrawl-py = "^1.10.1"
 pydantic = "^2.10.5"
+linkedin-api-client = "^0.3.0"
+pymongo = "^4.11"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
@@ -37,6 +39,7 @@ pandas = "^2.2.2"
 langgraph-cli = { version = "*", extras = ["inmem"] }
 debugpy = "^1.8.11"
 pytest-asyncio = "^0.25.2"
+flask = "^3.1.0"
 
 [build-system]
 requires = ["poetry-core"]

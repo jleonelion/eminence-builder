@@ -295,3 +295,16 @@ async def get_stored_reflections(store: BaseStore) -> list[str]:
     """Get reflections from storage."""
     ruleset = await store.aget(RULESET_NAMESPACE, key=RULESET_KEY)
     return ruleset.value if ruleset else []
+
+def calc_scheduled_date(scheduled: PostDate) -> datetime:
+    """Calculate the scheduled date."""
+
+    # TODO review how p1-3 are converted to datetime
+    if scheduled == "p1":
+        return get_next_saturday().replace(hour=8, minute=0)
+    elif scheduled == "p2":
+        return get_next_saturday().replace(hour=8, minute=0)
+    elif scheduled == "p3":
+        return get_next_saturday().replace(hour=13, minute=0)
+    else:
+        return scheduled

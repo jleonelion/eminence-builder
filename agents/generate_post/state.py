@@ -61,4 +61,6 @@ class GeneratePostState:
     """ The image to attach to the post and the MIME type of the image. """
     #TODO: define imageOptions
     condense_count: int = 0 # TODO: make sure this can handle parrallelism
+    object_id: str = None
+    """The object ID of the post stored in the mongo database."""
 
