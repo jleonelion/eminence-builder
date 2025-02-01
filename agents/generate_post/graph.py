@@ -165,58 +165,68 @@ async def human(
     response = response[0] if isinstance(response, list) else response
     response = cast(HumanResponse, response)
 
-    if response["type"] == "ignore":
-        return {
-            "next": END,
-        }
+    # TODO would prefer next state calculations be done in router function
+    match response["type"]:
+        case "ignore":
+            return {
+                "next": END,
+            }
+        case "response":
+            user_response = response.get("args", "")
+            route_determination = await determine_next_node(
+                post=state.post,
+                date_or_priority=default_date_string,
+                user_response=user_response,
+                config=config,
+            )
+            if route_determination["route"] == "rewrite_post":
+                return {
+                    "user_response": user_response,
+                    "next": "rewrite_post",
+                }
+            elif route_determination["route"] == "update_date":
+                return {
+                    "user_response": user_response,
+                    "next": "update_schedule_date",
+                }
+            else:
+                return {
+                    "user_response": user_response,
+                    "next": "unknown_response",
+                }
+        case "edit":
+            if "args" not in response["args"]:
+                raise ValueError(f"Expected response to have attribute args with key called args: {response['args']}. Must be defined")
+            
+            cast_args: Dict[str, str] = response["args"]["args"]
+            response_post = cast_args.get("post", None)
+            post_date = parse_date(cast_args.get("date", default_date_string))
+            
+            if not post_date:
+                raise ValueError(f"Invalid date format: {cast_args.get('date', default_date_string)}")
+            
+            return {
+                "next": "schedule_post",
+                "schedule_date": post_date,
+                "post": response_post if response_post else state.post,
+                "user_response": None,
+            }
+        
+        case "accept":
+            if "args" in response["args"]:                           
+                cast_args: Dict[str, str] = response["args"]["args"]
+                response_post = cast_args.get("post", None)
+                post_date = parse_date(cast_args.get("date", default_date_string))
+            
+            return {
+                "next": "schedule_post",
+                "schedule_date": post_date if post_date else state.schedule_date,
+                "post": response_post if response_post else state.post,
+                "user_response": None,
+            }
 
-    if not response["args"]:
-        # TODO log error
-        raise ValueError(f"Unexpected response args: {response["args"]}.  Must be defined")
-    
-    # TODO would prefer this logic be in router function
-    if response["type"] == "response":
-        route_determination = await determine_next_node(
-            post=state.post,
-            date_or_priority=default_date_string,
-            user_response=response["args"],
-            config=config,
-        )
-        if route_determination["route"] == "rewrite_post":
-            return {
-                "user_response": response["args"],
-                "next": "rewrite_post",
-            }
-        elif route_determination["route"] == "update_date":
-            return {
-                "user_response": response["args"],
-                "next": "update_schedule_date",
-            }
-        else:
-            return {
-                "user_response": response["args"],
-                "next": "unknown_response",
-            }
-    
-    # make sure response.args is a dict with key 'args'
-    if "args" not in response["args"]:
-        # TODO log error
-        raise ValueError(f"Unexpected response args value: {response["args"]}.  Must be defined")
-    # Cast to the expected type
-    cast_args: Dict[str, str] = response["args"]["args"]
-
-    # if 'post' key in cast_args is not defined, then raise an error
-    if "post" not in cast_args:
-        # TODO log error
-        raise ValueError(f"post key not defined in response args: {cast_args}")
-    else:
-        response_post = cast_args["post"]
-    
-    post_date = parse_date(cast_args.get("date", default_date_string))
-    
-    if not post_date:
-        # TODO log error
-        raise ValueError(f"Invalid date format: {cast_args.get('date', default_date_string)}")
+        case _:
+            raise ValueError(f"Unexpected response type: {response['type']}")
 
     # TODO: implement image management
     # let imageState: { imageUrl: string; mimeType: string } | undefined =
@@ -231,14 +241,6 @@ async def human(
     #       imageState = state.image;
     #     }
     #   }
-
-    return {
-        "next": "schedule_post",
-        "schedule_date": post_date,
-        "post": response_post,
-        "user_response": None,
-        # "image": imageState,
-    }
 
 async def rewrite_post(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:
     """Rewrite the post content."""
@@ -277,16 +279,16 @@ async def schedule_post(state: GeneratePostState, *, config: RunnableConfig, sto
     """Schedule the post."""
 
     config = GeneratePostConfiguration.from_runnable_config(config)
-
-    client = MongoClient(config.mongo_url)
-    db = client[config.mongo_db]
-    collection = db[config.mongo_collection_linkedin_posts]
     scheduled_post = {
         "topic": state.topic,
         "post": state.post, 
         "scheduled_date": calc_scheduled_date(state.schedule_date), 
         "status": "pending"
     }
+
+    client = MongoClient(config.mongo_url)
+    db = client[config.mongo_db]
+    collection = db[config.mongo_collection_linkedin_posts]
     result = collection.insert_one(scheduled_post)
 
     return {
