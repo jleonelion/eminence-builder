@@ -5,12 +5,14 @@ Functions:
     load_chat_model: Load a chat model from a model name.
 """
 
+from dataclasses import field
 import uuid
-from typing import Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Optional, Union
 
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
+from enum import Enum
 
 
 def _format_doc(doc: Document) -> str:
@@ -153,3 +155,19 @@ def reduce_docs(
 
 def unique_list(left: list[str], right: list[str]) -> list[str]:
     return list(dict.fromkeys(left + right))
+
+UrlType = Annotated[Union[Literal["github", "youtube", "general", "twitter", "reddit"], None], field(default_factory=str)]
+
+# TODO: Implement support for different link types
+def get_link_type(url: str) -> UrlType:
+    """Determine the type of link."""
+    
+    if "github" in url:
+        return "github"
+    if "youtube" in url:
+        return "youtube"
+    if "twitter" in url:
+        return "twitter"
+    if "reddit" in url:
+        return "reddit"
+    return "general"

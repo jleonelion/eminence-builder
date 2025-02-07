@@ -5,7 +5,8 @@
     "chat": "./backend/retrieval_graph/graph.py:graph",
     "generate_post": "./agents/generate_post/graph.py:graph",
     "verify_links": "./agents/verify_links/graph.py:graph",
-    "interrupt": "./scratchpad/interrupt.py:graph"
+    "interrupt": "./scratchpad/interrupt.py:graph",
+    "find_images": "./agents/find_images/graph.py:graph"
   },
   "env": ".env",
   "python_version": "3.11",

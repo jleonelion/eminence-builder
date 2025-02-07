@@ -49,7 +49,7 @@ def test_default_initialization(state):
     assert state.relevant_links == []
     assert state.post == ""
     assert state.schedule_date is None
-    assert state.userResponse is None
+    assert state.user_response is None
     assert state.next is None
     assert state.image is None
     assert state.condense_count == 0

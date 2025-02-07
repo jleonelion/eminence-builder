@@ -4,9 +4,10 @@ from langchain import hub
 
 PARSE_POST_REQUEST_PROMPT = (
     """
-    You are a skilled blogger, figuring out what to right about and referene materials. Review the user's input and provide the following:
-    - The topic of the blog post desired by the user.
-    - Any links the user is referencing as information sources for the post.
+    Review the user's input and try to determine the below items.  If you can't determine any of the items, leave them blank.
+    - The topic of the post desired by the user.
+    - The style of the post.  This will be based on the topic of the post.  Use only one of the following options.  If the topic relates to current events, use "news".  If the topic is explaining technical content, use "technical".  If the topic does not match any of these, use "default".
+    - Any links the user is referencing as sources for the post content.
     """
 )
 POST_SYSTEM_PROMPT = (
@@ -74,13 +75,30 @@ hashtag#QuantumComputing hashtag#Innovation hashtag#IBM hashtag#Google hashtag#F
 </example>
     """
 )
+NEWS_POST_EXAMPLES = (
+    """
+<example index="1">
+🤯 **OpenAI Goes Nuclear** 😬
+OpenAI announces a strategic partnership with the U.S. National Laboratories, focused on leveraging advanced AI for scientific research and nuclear weapons security. 
+
+Put a technology we don't fully understand in control of nuclear weapons...what could go wrong?
+
+I vote for a well-tested “Do No Harm” kill-switch.
+
+Cast your vote in the comments below.
+
+#nuclearai #treadcautiously #skynet
+</example>
+    """
+)
+
 POST_STRUCTURE_INSTRUCTIONS = (
     """
 The post should have three main sections, outlined below:
 <structure-instructions>
 
 <section key="1">
-The first part of the post is the header. This should be very short, no more than 5 words, include one to two emojis, have catchy title that relates to the post topic.
+The first part of the post is the header. This should be very short, no more than 5 words, the text needs to be bold and include one to two emojis. Have catchy title that relates to the post topic.
 </section>
 
 <section key="2">
@@ -96,6 +114,35 @@ The final section of the post should contain a call to action or question for op
 </structure-instructions>
     """
 )
+NEWS_POST_STRUCTURE_INSTRUCTIONS = (
+    """
+The post should have three main sections, outlined below:
+<structure-instructions>
+
+<section key="1">
+The first part of the post is the header. This should be very short and provacative. Include one or two emojis. Choose the most controversal impact for the header.
+</section>
+
+<section key="2">
+This provides probing statements about the most controversial impact of the event. Use playful language to engage the reader.
+</section>
+
+<section key="3">
+This section contains a call to action.  This should be a short question and statement that encourages the reader to provide their own opinion in the comments.
+</section>
+
+<section key="3">
+This section of the post includes link to the reference material.
+</section>
+
+<section key="3">
+The final section of the post should be relevant hashtags.  Don't be afraid to create your own hashtags that reflect the opinon expressed in prior sections and make reference to relevant popular culture.
+</section>
+
+</structure-instructions>
+    """
+)
+
 POST_CONTENT_RULES = (
     """
 - Focus your post on what the content covers, the benefits, and summarize how it works. This should be concise and high level.
@@ -103,10 +150,17 @@ POST_CONTENT_RULES = (
 - Keep posts short, concise and engaging
 - Limit the use of emojis to the post header, and optionally in the call to action.
 - use hashtags at the end of the post to increase visibility
-- ALWAYS use present tense to make announcements feel immediate (e.g., "Microsoft just launched..." instead of "Microsoft launches...").
 - ALWAYS include the link to the source materials in the call to action section of the post.
     """
 )
+NEWS_POST_CONTENT_RULES = (
+    """
+- Keep posts short, concise, opinionated, and engaging
+- Limit the use of emojis to the post header, and optionally in the call to action.
+- ALWAYS use present tense to make announcements feel immediate (e.g., "Microsoft just launched..." instead of "Microsoft launches...").
+    """
+)
+
 CONDENSE_POST_PROMPT = (
     """
 You're a highly skilled technology influencer, working on crafting thoughtful and engaging content for LinkedIn posts.
@@ -152,7 +206,7 @@ Follow all rules and instructions outlined above. The user message below will pr
     """
 )
 
-REPORT_SYSTEM_PROMPT = (
+REPORT_SYSTEM_PROMPT_DEFAULT = (
     """
 You are a highly regarded software and systems architect.
 You have been tasked with writing a marketing report on content submitted to you from a third party.
@@ -183,6 +237,45 @@ Finally, remember to have fun!
 Given these instructions, examine the users input closely, and generate a detailed and thoughtful marketing report on it.
     """
 )
+REPORT_SYSTEM_PROMPT_NEWS = (
+    """
+You are a news reporter.
+You have been tasked with writing an article using content submitted to you from a third party.
+This article will be used to craft LinkedIn posts summarizing the event and making opinionated commentary.
+
+The article should follow the structure guidelines.
+<structure-guidelines>
+<part key="1">
+This is the introduction and summary of the event. This must include key details such as:
+- the who, what, when, where, why, and how of the event.
+</part>
+
+<part key="2">
+This section should focus on how the potential impacts of the event. It should include analysis including:
+- potential impact of the event on the technology industry.
+- potential impact of the event on the cybersecurity and privacy.
+</part>
+</structure-guidelines>
+
+Follow these rules and guidelines when generating the report:
+<rules>
+- stick with the facts about the event when writing the article introduction.
+- include opinionated and forward looking statements when writing about the potential impacts of the event.
+<rules>
+
+Lastly, you should use the following process when writing the report:
+<writing-process>
+- First, read over the content VERY thoroughly.
+- Take notes, and write down your thoughts about the content after reading it carefully. These should be interesting insights or facts which you think you'll need later on when writing the final article. This should be the first text you write. ALWAYS perform this step first, and wrap the notes and thoughts inside opening and closing "<thinking>" tags.
+- Finally, write the article. Use the notes and thoughts you wrote down in the previous step to help you write the article. This should be the last text you write. Wrap your article inside "<report>" tags. Ensure you ALWAYS WRAP your article inside the "<report>" tags, with an opening and closing tag.
+</writing-process>
+
+Finally, remember to have fun!
+
+Given these instructions, examine the users input closely, and generate a detailed and thoughtful article on it.
+    """
+)
+
 REPORT_CONTENT_RULES = (
     """
 - Focus on the subject of the content, and how it relates to the real-world scenarios.
@@ -321,5 +414,91 @@ The original post you wrote is as follows:
 {reflections_prompt}
 
 Listen to your boss closely, and make the necessary changes to the post. You should respond ONLY with the updated post, with no additional information, or text before or after the post.
+"""
+)
+
+VALIDATE_IMAGES_PROMPT = (
+    """
+You are an advanced AI assistant tasked with validating image options for a social media post.
+Your goal is to identify which images from a given set are relevant to the post, based on the content of the post and an associated marketing report.
+
+First, carefully read and analyze the following social media post:
+
+<post>
+{post}
+</post>
+
+Now, review the marketing report that was used to generate this post:
+
+<report>
+{report}
+</report>
+
+To determine which images are relevant, consider the following criteria:
+1. Does the image directly illustrate a key point or theme from the post?
+2. Does the image represent any products, services, or concepts mentioned in either the post or the report?
+
+You should NEVER include images which are:
+- Personal, or non-essential images from a business perspective.
+- Small, low-resolution images. These are likely accidentally included in the post and should be excluded.
+
+You will be presented with a list of image options. Your task is to identify which of these images are relevant to the post based on the criteria above.
+
+Provide your response in the following format:
+1. <analysis> tag: Briefly explain your thought process for each image, referencing specific elements from the post and report.
+2. <relevant_indices> tag: List the indices of the relevant images, starting from 0, separated by commas.
+
+Ensure you ALWAYS WRAP your analysis and relevant indices inside the <analysis> and <relevant_indices> tags, respectively. Do not only prefix, but ensure they are wrapped completely.
+
+Remember to carefully consider each image in relation to both the post content and the marketing report.
+Be thorough in your analysis, but focus on the most important factors that determine relevance.
+If an image is borderline, err on the side of inclusion.
+
+Provide your complete response within <answer> tags.
+    """
+)
+
+
+RERANK_IMAGES_PROMPT = (
+"""
+You're a highly regarded marketing employee, working on crafting thoughtful and engaging content for your company's LinkedIn and Twitter pages.
+
+You're writing a post, and in doing so you've found a series of images that you think will help make the post more engaging.
+
+Your task is to re-rank these images in order of which you think is the most engaging and best for the post.
+
+Here is the marketing report the post was generated based on:
+<report>
+{report}
+</report>
+
+And here's the actual post:
+<post>
+{post}
+</post>
+
+Now, given this context, re-rank the images in order of most relevant to least relevant.
+
+Provide your response in the following format:
+1. <analysis> tag: Briefly explain your thought process for each image, referencing specific elements from the post and report and why each image is or isn't as relevant as others.
+2. <reranked-indices> tag: List the indices of the relevant images in order of most relevant to least relevant, separated by commas.
+
+Example: You're given 5 images, and deem that the relevancy order is [2, 0, 1, 4, 3], then you would respond as follows:
+<answer>
+<analysis>
+- Image 2 is (explanation here)
+- Image 0 is (explanation here)
+- Image 1 is (explanation here)
+- Image 4 is (explanation here)
+- Image 3 is (explanation here)
+</analysis>
+<reranked-indices>
+2, 0, 1, 4, 3
+</reranked-indices>
+</answer>
+
+Ensure you ALWAYS WRAP your analysis and relevant indices inside the <analysis> and <reranked-indices> tags, respectively. Do not only prefix, but ensure they are wrapped completely.
+
+Provide your complete response within <answer> tags.
 """
 )

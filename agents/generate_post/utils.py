@@ -29,23 +29,45 @@ async def build_rewrite_post_prompt(
     """Get reflections on the generated post."""
     return REWRITE_POST_PROMPT.format(reflections_prompt=await build_reflections_prompt(state, config, store), original_post=state.post)
 
+examples_by_style = { 
+    "default": POST_EXAMPLES,
+    "news": NEWS_POST_EXAMPLES,
+}
 def get_examples(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get post examples."""
-    return POST_EXAMPLES
+    if state.style in examples_by_style:
+        return examples_by_style[state.style]
+    else:
+        return POST_EXAMPLES
 
+instructions_by_style = {
+    "default": POST_STRUCTURE_INSTRUCTIONS,
+    "news": NEWS_POST_STRUCTURE_INSTRUCTIONS,
+}
 def get_structure_instructions(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get post structure instructions."""
-    return POST_STRUCTURE_INSTRUCTIONS
+    if state.style in instructions_by_style:
+        return instructions_by_style[state.style]
+    else:
+        return POST_STRUCTURE_INSTRUCTIONS
+
+content_rules_by_style = {
+    "default": POST_CONTENT_RULES,
+    "news": NEWS_POST_CONTENT_RULES,
+}
 
 def get_content_rules(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get content rules."""
-    return POST_CONTENT_RULES
+    if state.style in content_rules_by_style:
+        return content_rules_by_style[state.style]
+    else:
+        return POST_CONTENT_RULES
 
 def build_post_system_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore
@@ -82,7 +104,7 @@ Here is the report I wrote on the content I'd like posted to LinkedIn:
 {report}
 </report>
 
-And here is the link to the content I'd like promoted:
+And here is the link to the reference content:
 <link>
 {link}
 </link>
@@ -92,10 +114,13 @@ def build_report_system_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Get the system prompt for generating a post."""
-    return REPORT_SYSTEM_PROMPT.format(
-        content_rules=get_report_content_rules(state, config),
-        structure_guidelines=get_report_structure_guidelines(state, config)
-    )
+    if state.style == "news":
+        return REPORT_SYSTEM_PROMPT_NEWS
+    else:
+        return REPORT_SYSTEM_PROMPT_DEFAULT.format(
+            content_rules=get_report_content_rules(state, config),
+            structure_guidelines=get_report_structure_guidelines(state, config)
+        )
 
 def get_report_content_rules(
     state: GeneratePostState, config: GeneratePostConfiguration

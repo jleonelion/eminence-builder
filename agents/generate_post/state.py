@@ -36,6 +36,13 @@ class GeneratePostState:
             "description": "The topic to verify the content against."
         },
     )
+    style: str = field(
+        default="default",
+        metadata={
+            "description": "The style to use when creating the post.",
+            "choices": ["default", "news", "education"],
+        },
+    )
     links: Annotated[list[str], unique_list] = field(
         default_factory=list,
         metadata={
@@ -43,7 +50,7 @@ class GeneratePostState:
         },
     )
     report: str = ""
-    """Messages including the initial user prompt, feedback from the editor, and feedback from user"""
+    """Report generated on the content of the messages.  Used as context for the post generation."""
     page_contents: Annotated[list[Document], reduce_docs] = field(default_factory=list)
     """Page content used in the verification nodes.  Will be used in the report generation node."""
     relevant_links: Annotated[list[str], unique_list] = field(default_factory=list)
@@ -59,7 +66,8 @@ class GeneratePostState:
     """The node to execute next."""
     image: Image = None
     """ The image to attach to the post and the MIME type of the image. """
-    #TODO: define imageOptions
+    image_options: list[str] = field(default_factory=list)
+    """ The image options to provide the user. """
     condense_count: int = 0 # TODO: make sure this can handle parrallelism
     object_id: str = None
     """The object ID of the post stored in the mongo database."""

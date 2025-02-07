@@ -30,6 +30,7 @@ from bson.objectid import ObjectId
 @dataclass(kw_only=True)
 class PostInformation:
     topic: str
+    style: str = field(default="default", metadata={"choices": ["default", "news", "education"]})
     links: list[str]
 
 async def parse_post_request(
@@ -54,9 +55,11 @@ async def parse_post_request(
     )
     if not response["topic"]:
         raise ValueError("Could not determine topic.")
+    
     return {
         "topic": response["topic"],
         "links": response["links"],
+        "style": response["style"],
     }
 
 async def generate_report(
@@ -314,9 +317,7 @@ def route_condense_human_images(
     elif config.text_only_mode:
         return "human"
     else:
-        # TODO implement image management and...
-        # return "find_images"
-        return "human"
+        return "find_images"
 
 def route_human_response(
     state: GeneratePostState, config: RunnableConfig
