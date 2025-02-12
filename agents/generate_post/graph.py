@@ -14,7 +14,7 @@ from typing_extensions import TypedDict
 import random
 
 from agents.utils import load_chat_model
-from agents.generate_post.state import GeneratePostState
+from agents.generate_post.state import GeneratePostState, Image
 from agents.generate_post.configuration import GeneratePostConfiguration
 from agents.generate_post.interrupt import *
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -22,6 +22,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.types import interrupt, Command
 from agents.generate_post.utils import *
 from agents.verify_links.graph import graph as verify_links
+from agents.find_images.graph import graph as find_images
 import pytz
 from datetime import datetime
 from pymongo import MongoClient
@@ -151,6 +152,7 @@ async def human(
     request = HumanInterrupt = {
         "action_request": {
             "action": "Schedule LinkedIn posts",
+            "image": state.image.image_url | "" if state.image and not config.text_only_mode else None,
             "args": {
                 "post": state.post,
                 "default_date": default_date_string,
@@ -167,6 +169,15 @@ async def human(
     response = interrupt([request])
     response = response[0] if isinstance(response, list) else response
     response = cast(HumanResponse, response)
+
+    if not config.text_only_mode:
+        procceesed_image = await process_image_input(response["args"].get("image", None))
+        if procceesed_image != "remove":
+            image_state = procceesed_image
+        elif procceesed_image == "remove":
+            image_state = None
+        else:
+            image_state = state.image
 
     # TODO would prefer next state calculations be done in router function
     match response["type"]:
@@ -213,8 +224,8 @@ async def human(
                 "schedule_date": post_date,
                 "post": response_post if response_post else state.post,
                 "user_response": None,
-            }
-        
+                "image": Image(imageUrl=image_state.get("image_url", None), mimeType=image_state.get("mime_type", None))
+            }      
         case "accept":
             if "args" in response["args"]:                           
                 cast_args: Dict[str, str] = response["args"]["args"]
@@ -226,24 +237,10 @@ async def human(
                 "schedule_date": post_date if post_date else state.schedule_date,
                 "post": response_post if response_post else state.post,
                 "user_response": None,
+                "image": Image(imageUrl=image_state.get("image_url", None), mimeType=image_state.get("mime_type", None))
             }
-
         case _:
             raise ValueError(f"Unexpected response type: {response['type']}")
-
-    # TODO: implement image management
-    # let imageState: { imageUrl: string; mimeType: string } | undefined =
-    #     undefined;
-    #   if (!isTextOnlyMode) {
-    #     const processedImage = await processImageInput(castArgs.image);
-    #     if (processedImage && processedImage !== "remove") {
-    #       imageState = processedImage;
-    #     } else if (processedImage === "remove") {
-    #       imageState = undefined;
-    #     } else {
-    #       imageState = state.image;
-    #     }
-    #   }
 
 async def rewrite_post(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:
     """Rewrite the post content."""
@@ -268,16 +265,6 @@ async def rewrite_post(state: GeneratePostState, *, config: RunnableConfig, stor
         "user_response": None,
     }
 
-async def find_images(
-    state: GeneratePostState, *, config: RunnableConfig
-) -> GeneratePostState:
-    """Locate images for post."""
-    
-    # TODO: Implement image management
-    return {
-        "post": state.post,
-    }
-
 async def schedule_post(state: GeneratePostState, *, config: RunnableConfig, store: BaseStore) -> GeneratePostState:
     """Schedule the post."""
 
@@ -286,7 +273,8 @@ async def schedule_post(state: GeneratePostState, *, config: RunnableConfig, sto
         "topic": state.topic,
         "post": state.post, 
         "scheduled_date": calc_scheduled_date(state.schedule_date), 
-        "status": "pending"
+        "status": "pending",
+        "image": state.image
     }
 
     client = MongoClient(config.mongo_url)
@@ -338,7 +326,7 @@ builder.add_node(generate_post)
 builder.add_node(generate_report)
 builder.add_node(condense_post)
 builder.add_node(human)
-builder.add_node(find_images)
+builder.add_node("find_images", find_images)
 builder.add_node(rewrite_post)
 builder.add_node(schedule_post)
 builder.add_node(update_schedule_date)

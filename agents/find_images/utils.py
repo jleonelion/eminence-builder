@@ -1,6 +1,5 @@
 import re
 from typing import Optional, TypedDict
-import validators
 from agents.find_images.configuration import FindImagesConfiguration
 from agents.find_images.state import FindImagesState
 from agents.prompts import VALIDATE_IMAGES_PROMPT, RERANK_IMAGES_PROMPT
@@ -22,13 +21,6 @@ BLACKLISTED_IMAGE_URL_ENDINGS = [".svg", ".ico", ".bmp"]
 def filter_image_urls(urls: list[str]) -> list[str]:
     """Filter unwanted image URLs."""
     return [url for url in urls if not any(url.endswith(ending) for ending in BLACKLISTED_IMAGE_URL_ENDINGS)]
-
-def is_valid_url(url: str) -> bool:
-    """Check if a URL is valid."""
-    try:
-        return validators.url(url) == True
-    except validators.ValidationFailure:
-        return False
 
 def build_validate_images_prompt(
     state: FindImagesState,

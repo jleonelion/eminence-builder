@@ -7,8 +7,10 @@ from agents.generate_post.configuration import GeneratePostConfiguration
 from agents.generate_post.state import GeneratePostState, PostDate
 from agents.prompts import *
 from agents.utils import *
+from agents.find_images.utils import BLACKLISTED_MIME_TYPES
 from langchain_core.runnables import RunnableConfig
 from langgraph.store.base import BaseStore, Item
+import aiohttp
 
 async def build_reflections_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore
@@ -154,7 +156,7 @@ def get_unknown_response_desc(
 <hr />"""
     return ""
 
-def get_innterupt_desc_template(
+def get_interupt_desc_template(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     return """{unknow_response_desc}
@@ -207,25 +209,31 @@ def build_interrupt_desc(
     state: GeneratePostState, config: GeneratePostConfiguration
 ) -> str:
     """Build interrupt description"""
-    image_options_text = "" # TODO: implement images
-    #   const imageOptionsText =
-    #     imageOptions?.length && !isTextOnlyMode
-    #       ? `## Image Options\n\nThe following image options are available. Select one by copying and pasting the URL into the 'image' field.\n\n${imageOptions.map((url) => `URL: ${url}\nImage: <details><summary>Click to view image</summary>\n\n![](${url})\n</details>\n`).join("\n")}`
-    #       : "";
-    image_instructions = "" # TODO implement images
-    # const imageInstructionsString =
-    #     imageOptions?.length && !isTextOnlyMode
-    #       ? `If you wish to attach an image to the post, please add a public image URL.
-    
-    # You may remove the image by setting the 'image' field to 'remove', or by removing all text from the field
-    # To replace the image, simply add a new public image URL to the field.
-    # MIME types will be automatically extracted from the image.
-    
-    # Supported image types: \`image/jpeg\` | \`image/gif\` | \`image/png\` | \`image/webp\``
-    #       : isTextOnlyMode
-    #         ? "Text only mode enabled. Image support has been disabled.\n"
-    #         : "No image options available.";
-    return get_innterupt_desc_template(state, config).format(
+    image_options_text = ""
+    image_instructions = "Text only mode enabled. Image support has been disabled.\n" if config.text_only_mode else "No image options available."
+    if not config.text_only_mode:
+        if len(state.image_options) > 0:
+            image_list = "\n".join([f"URL: {url}\nImage: <details><summary>Click to view image</summary>\n\n![](${url})\n</details>\n" for url in state.image_options])
+            image_options_text = f"""
+            ## Image Options
+            The following image options are available. Select one by copying and pasting the URL into the 'image' field.
+            {image_list}
+            """
+            image_instructions = f"""
+            If you wish to attach an image to the post, please add a public image URL.
+        
+            You may remove the image by setting the 'image' field to 'remove', or by removing all text from the field
+            To replace the image, simply add a new public image URL to the field.
+            MIME types will be automatically extracted from the image.
+        
+            Supported image types: \`image/jpeg\` | \`image/gif\` | \`image/png\` | \`image/webp\`
+            """
+        else:
+            image_instructions = "No image options available."
+    else:
+        image_instructions = "Text only mode enabled. Image support has been disabled.\n"
+
+    return get_interupt_desc_template(state, config).format(
         unknow_response_desc=get_unknown_response_desc(state, config),
         relavant_links="\n- ".join(state.relevant_links),
         original_link=state.links[0],
@@ -333,3 +341,35 @@ def calc_scheduled_date(scheduled: PostDate) -> datetime:
         return get_next_saturday().replace(hour=13, minute=0)
     else:
         return scheduled
+
+async def process_image_input(input: str) -> dict:
+    
+    if input.lower() == "remove":
+        return "remove"
+    if is_valid_url(input):
+        content_type = await image_url_to_buffer(input)["content_type"]
+        # if image type is blacklisted, then don't return it
+        if any(content_type.startswith(blacklisted) for blacklisted in BLACKLISTED_MIME_TYPES):
+            return None
+        else:
+            return {
+                "image_url": input,
+                "mime_type": content_type,
+            }
+    else:
+        return None
+
+
+async def image_url_to_buffer(url: str) -> dict[str, Any]:
+    if not is_valid_url(url=url):
+        raise Exception("Invalid image URL provided")
+    
+    response = await aiohttp.ClientSession().get(url=url)
+    response.raise_for_status()
+    buffer = await response.read()
+    content_type = response.headers.get('Content-Type', 'image/jpeg')
+    
+    return {
+        "buffer": buffer,
+        "content_type": content_type
+    }

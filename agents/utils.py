@@ -8,6 +8,7 @@ Functions:
 from dataclasses import field
 import uuid
 from typing import Annotated, Any, Literal, Optional, Union
+import validators
 
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
@@ -171,3 +172,10 @@ def get_link_type(url: str) -> UrlType:
     if "reddit" in url:
         return "reddit"
     return "general"
+
+def is_valid_url(url: str) -> bool:
+    """Check if a URL is valid."""
+    try:
+        return validators.url(url) == True
+    except validators.ValidationFailure:
+        return False

@@ -8,6 +8,7 @@ from agents.find_images.state import FindImagesState
 from agents.find_images.configuration import FindImagesConfiguration
 from agents.utils import get_link_type, load_chat_model
 from agents.find_images.utils import *
+from agents.utils import is_valid_url
 from langchain_core.documents import Document
 
 def mock_find_images_state() -> FindImagesState:
@@ -21,7 +22,7 @@ async def find_images(
     state: FindImagesState, config: RunnableConfig
 ) -> FindImagesState:
     """Locate image urls referenced in page_contents and add them to state.image_options."""
-    state = mock_find_images_state()
+    # state = mock_find_images_state()
     image_urls = []
     link = state.relevant_links[0]
     link_type = get_link_type(link)
@@ -177,7 +178,7 @@ async def rerank_images(
     ranked_image_options = [state.image_options[i] for i in reranked_indices]
 
     return {
-        "post": ranked_image_options,
+        "image_options": ranked_image_options,
     }
 
 def route_validate_images(

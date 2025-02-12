@@ -12,7 +12,7 @@ import os
 class GeneratePostConfiguration(BaseConfiguration):
     """The configuration for the agent."""
     text_only_mode: bool = field(
-        default=True,
+        default=False,
         metadata={
             "description": "Whether or not posts should be plain text."
         },
