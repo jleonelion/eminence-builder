@@ -15,6 +15,7 @@
 1. Activate python `pyenv global 3.13.1`
 1. Install poetry `pip install poetry`
 1. Install required packages `poetry install`
+1. Install Playwright `playwright install`
 1. Determine path to interpreter `poetry env info --path`
 
 ### Setup VS Code
