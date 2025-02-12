@@ -225,3 +225,4 @@ token.json
 .files/
 *.sql
 **/.chainlit/*
+agent_history.gif
