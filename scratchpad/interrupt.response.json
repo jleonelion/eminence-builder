@@ -16,14 +16,15 @@
         "type": "response",
         "args": "You aren't advertising the guide, don't make reference to the guid.  Highlight top 3 benefits of collecting syslogs.  Summarize key steps to configure syslog collection with a bullet-point format.  Don't worry about the guide, you are trying to inform readers on the topic, not point them to the guide."
     }
+    [
     {
         "type": "edit",
         "args": {
             "args": {
-                "post": "🚨 **More Side-Hustle Scams for Remote Workers** 🎲 The FTC warns of a shocking rise in online task job scams, jumping from zero cases in 2020 to 20,000 in the first half of 2024.\n\nI get many texts and DMs about jobs for extra money. They seemed suspicious, and now the scam is revealed!\n\nThese scams promise easy earnings but lead to over $220 million in losses this year alone. Scammers lure victims with small payments, then ask for deposits to \"unlock\" earnings. This isn't just a financial issue; it's a growing threat to our digital safety. Have you every responded to the random job offers? Let me know in the comments!\n\nRead more about the FTC's warning here: [FTC Warns of Online Task Job Scams](https://www.bleepingcomputer.com/news/security/ftc-warns-of-online-task-job-scams-hooking-victims-like-gambling/)\n\n#ScamAwareness #Cybersecurity #DigitalSafety",
-                "date": "02/12/2025 11:00 AM PST",
-                "image": "https://www.bleepstatic.com/content/hl-images/2023/09/05/2.jpg"
+                "post": "🚨 **DeepSeek's Data Disaster** 🔒 A not so shocking breach at Chinese AI startup DeepSeek exposes sensitive user data, reminding us all to be prudent of our AI conversation.\n\nDon't forget, ChatGPT had at least one disclosd data breach.\n\nWhile DeepSeek's rapid rise is impressive, this incident highlights that hypergrowth often sidelines security. The ease of accessing unencrypted databases is a wake-up call.\n\nHow does the first-to-market priority of AI firms impact your adoption? Let me know in the comments. Read more about the incident here: https://futurism.com/the-byte/deepseak-leaks-user-chatlogs\n\n#DeepSeek #Cybersecurity #AI #DataProtection #InnovationVsSecurity",
+                "date": "02/12/2025 7:30 PM PST"
             }
         }
     }
+    ]
 ]

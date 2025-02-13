@@ -2,9 +2,12 @@ import os
 import logging
 import logging.config
 import json
+import httpx
+import asyncio
 from bson import json_util
 from fastapi import FastAPI
 from apscheduler.schedulers.background import BackgroundScheduler
+from contextlib import asynccontextmanager
 from agents.linkedin_upload_post.configuration import LinkedInUploadPostConfiguration
 from agents.linkedin_upload_post.utils import *
 from agents.linkedin_upload_post.state import LinkedInUploadPostState
@@ -17,15 +20,40 @@ logging.config.fileConfig(config_file_path)
 logger = logging.getLogger(__name__)
 logger.info(f"Logging setup complete")
 
-app = FastAPI()
+HOST = "127.0.0.1"
+PORT = 8000
+SELF_URL = f"http://{HOST}:{PORT}"
+TIMEOUT_SECONDS = 5 * 60.0 # 5 minutes
+INTERVAL_MINUTES = 60 # 1 hour
 
-# TODO setup recurring task to check for pending posts
-# def scheduled_task():
-#     print("This task runs every 10 seconds.")
+# call the now endpoint
+async def call_now():
+    logger.info("Invoking call to /now endpoint.")
+    async with httpx.AsyncClient() as client:
+        timeout = httpx.Timeout(TIMEOUT_SECONDS)
+        response = await client.get(f"{SELF_URL}/now", timeout=timeout)
+        logger.debug(f"Response from /now endpoint: {response.json()}")
 
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(scheduled_task, "interval", seconds=10)
-# scheduler.start()
+
+# APScheduler does not support async functions, so we need to run the async function in a sync function
+def call_now_sync():
+    asyncio.run(call_now())
+
+
+# define schedule to call the now endpoint
+scheduler = BackgroundScheduler()
+scheduler.add_job(call_now_sync, "interval", minutes=INTERVAL_MINUTES)
+# scheduler.add_job(call_now_sync, "interval", seconds=15)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get(
@@ -56,7 +84,7 @@ async def now():
     return json.loads(json_util.dumps(result))
 
 
-@app.get("/")
+@app.get("/", summary="Liveliness probe")
 async def home():
     return {"message": "Hello, FastAPI!"}
 
@@ -64,4 +92,4 @@ async def home():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=HOST, port=PORT)

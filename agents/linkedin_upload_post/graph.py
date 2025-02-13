@@ -24,11 +24,10 @@ async def load_document(
     logger.debug("Loading pending posts")
     config = LinkedInUploadPostConfiguration.from_runnable_config(config)
     pending_posts = load_next_pending_post(config)
-    if not pending_posts:
-        logger.debug("No pending posts found.")
-        return state
 
-    return {"post": pending_posts[0]}
+    for post in pending_posts:
+        return {"post": post}
+    return {"post": None}
 
 
 async def create_post(
@@ -43,7 +42,14 @@ async def create_post(
     config = LinkedInUploadPostConfiguration.from_runnable_config(config)
 
     browser = None
+    uploaded = False
+    collection = load_mongo_collection(config)
     try:
+        # update post document state to queued (so no parrallel jobs try to upload the same post)
+        collection.update_one(
+            {"_id": state.post["_id"]}, {"$set": {"status": "queued"}}
+        )
+        # launch browser agent to upload post
         browser = Browser(config=config.browser_config)
         model = load_chat_model(config.browser_model, config.browser_model_kwargs)
         agent = Agent(
@@ -53,7 +59,18 @@ async def create_post(
         )
         logger.debug("Launching post upload agent.")
         await agent.run(max_steps=20)
+        uploaded = True
+        # record fact that post was uploaded
+        collection.update_one(
+            {"_id": state.post["_id"]},
+            {"$set": {"status": "uploaded", "posted_date": datetime.now()}},
+        )
     except Exception as e:
+        # rollback status to pending if exception raised before post was uploaded
+        if not uploaded:
+            collection.update_one(
+                {"_id": state.post["_id"]}, {"$set": {"status": "pending"}}
+            )
         print(e)
     finally:
         await browser.close() if browser else None
@@ -87,22 +104,23 @@ graph = builder.compile()
 graph.name = "LinkedInUploadPost"
 
 
-# async def main():
-#     # Invoke the graph
-#     state = LinkedInUploadPostState()
-#     result = await graph.ainvoke(
-#         input=state
-#         # {
-#         #     "document": {
-#         #         "_id": {"$oid": "679c56387036e34fcd74c31e"},
-#         #         "topic": "Collect syslogs in Azure Sentinel",
-#         #         "post": "🔒 Collect Syslogs In Azure Sentinel! 🚀\n\nImprove how you monitor your Azure estate:\n\n1. **Improved Security Monitoring:** Syslog collection allows for real-time tracking of security events on Linux VMs, enabling quicker responses to potential threats.\n2. **Centralized Log Management:** Streamline your log data from various sources into a single location for easier analysis and compliance reporting.\n3. **Enhanced Troubleshooting:** Quickly identify and resolve issues by analyzing logs from different systems, reducing downtime and improving system reliability.\n\n**Key Steps to Aggregate Syslogs:**\n- **Install Syslog from ContentHub:** Update your Sentinel workspace to install the Syslog capability from Content Hub\n- **Define Data Collection Rules in Azure Monitor:** Rules can collect everything, but you probably only want server facitlities and log levels.\n- **Add Azure Monitor Agent to your Linux VM:** Set up a Syslog collector on a Linux VM.\n- **Implement Security Measures:** Utilize scripts to optimize performance and enhance security alerting.\n\n💡 How does your organization manage log collection?\n\n#Cybersecurity #LogManagement #Azure #Syslog",
-#         #         "scheduled_date": {"$date": "2025-01-31T13:57:00.000Z"},
-#         #         "status": "pending",
-#         #     }
-#         # }
-#     )
-#     print(result)
+async def main():
+    # Invoke the graph
+    state = LinkedInUploadPostState()
+    result = await graph.ainvoke(
+        input=state
+        # {
+        #     "document": {
+        #         "_id": {"$oid": "679c56387036e34fcd74c31e"},
+        #         "topic": "Collect syslogs in Azure Sentinel",
+        #         "post": "🔒 Collect Syslogs In Azure Sentinel! 🚀\n\nImprove how you monitor your Azure estate:\n\n1. **Improved Security Monitoring:** Syslog collection allows for real-time tracking of security events on Linux VMs, enabling quicker responses to potential threats.\n2. **Centralized Log Management:** Streamline your log data from various sources into a single location for easier analysis and compliance reporting.\n3. **Enhanced Troubleshooting:** Quickly identify and resolve issues by analyzing logs from different systems, reducing downtime and improving system reliability.\n\n**Key Steps to Aggregate Syslogs:**\n- **Install Syslog from ContentHub:** Update your Sentinel workspace to install the Syslog capability from Content Hub\n- **Define Data Collection Rules in Azure Monitor:** Rules can collect everything, but you probably only want server facitlities and log levels.\n- **Add Azure Monitor Agent to your Linux VM:** Set up a Syslog collector on a Linux VM.\n- **Implement Security Measures:** Utilize scripts to optimize performance and enhance security alerting.\n\n💡 How does your organization manage log collection?\n\n#Cybersecurity #LogManagement #Azure #Syslog",
+        #         "scheduled_date": {"$date": "2025-01-31T13:57:00.000Z"},
+        #         "status": "pending",
+        #     }
+        # }
+    )
+    print(result)
 
 
-# asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
