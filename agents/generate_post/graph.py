@@ -21,6 +21,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.types import interrupt, Command
 from agents.generate_post.utils import *
+from agents.utils import load_mongo_collection
 from agents.verify_links.graph import graph as verify_links
 from agents.find_images.graph import graph as find_images
 import pytz
@@ -252,8 +253,12 @@ async def human(
                 "post": response_post if response_post else state.post,
                 "user_response": None,
                 "image": Image(
-                    image_url=image_state.get("image_url", None),
-                    mime_type=image_state.get("mime_type", None),
+                    image_url=(
+                        image_state.get("image_url", None) if image_state else None
+                    ),
+                    mime_type=(
+                        image_state.get("mime_type", None) if image_state else None
+                    ),
                 ),
             }
         case "accept":
@@ -314,11 +319,10 @@ async def schedule_post(
         "scheduled_date": calc_scheduled_date(state.schedule_date),
         "status": "pending",
         "image": state.image,
+        "created_date": datetime.now(),
     }
 
-    client = MongoClient(config.mongo_url)
-    db = client[config.mongo_db]
-    collection = db[config.mongo_collection_linkedin_posts]
+    collection = load_mongo_collection(config)
     result = collection.insert_one(scheduled_post)
 
     return {
@@ -330,6 +334,7 @@ async def update_schedule_date(
     state: GeneratePostState, *, config: RunnableConfig, store: BaseStore
 ) -> GeneratePostState:
     # TODO: Implement post scheduling
+    # "modified_date": datetime.now(),
     return {
         "post": state.post,
     }
