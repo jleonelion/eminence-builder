@@ -399,7 +399,7 @@ def calc_scheduled_date(scheduled: PostDate) -> datetime:
 
 async def process_image_input(input: str) -> dict:
 
-    if input.lower() == "remove":
+    if input and input.lower() == "remove":
         return "remove"
     if is_valid_url(input):
         content_type = await determine_content_type(input)
