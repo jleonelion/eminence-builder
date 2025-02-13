@@ -114,8 +114,8 @@ async def validate_images(
             )
             chunk_analysis = parse_validate_images_response(response.content)
             # translate chunk index values to global index values (their value in the image_options array)
-            global_indices = [i + base_index for i in chunk_analysis]
-            all_relevant_indices.extend(global_indices)
+            # global_indices = [i + base_index for i in chunk_analysis]
+            all_relevant_indices.extend(chunk_analysis)
         except Exception as e:
             # TODO: log error about problem validating chunk
             pass

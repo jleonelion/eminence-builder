@@ -18,8 +18,8 @@ PostDate = Annotated[Union[datetime, Literal["p1", "p2", "p3"]], field(default_f
 @dataclass(kw_only=True)
 class Image(TypedDict):
     """Structure to image information"""
-    imageUrl: str
-    mimeType: str
+    image_url: str
+    mime_type: str
 
 @dataclass(kw_only=True)
 class GeneratePostState:
@@ -33,7 +33,13 @@ class GeneratePostState:
     topic: str = field(
         default="",
         metadata={
-            "description": "The topic to verify the content against."
+            "description": "The general topic of the post."
+        },
+    )
+    commentary: str = field(
+        default="",
+        metadata={
+            "description": "Editorial commentary about the news event."
         },
     )
     style: str = field(

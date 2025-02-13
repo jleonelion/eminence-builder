@@ -90,7 +90,6 @@ def load_chat_model(fully_specified_name: str, model_kwargs: Optional[dict[str, 
 
     return init_chat_model(model, model_provider=provider, **model_kwargs)
 
-
 def reduce_docs(
     existing: Optional[list[Document]],
     new: Union[
@@ -179,3 +178,30 @@ def is_valid_url(url: str) -> bool:
         return validators.url(url) == True
     except validators.ValidationFailure:
         return False
+
+def convert_md_to_unicode(text):
+    # Unicode bold character mappings
+    unicode_bold = {
+        'a': '𝐚', 'b': '𝐛', 'c': '𝐜', 'd': '𝐝', 'e': '𝐞', 'f': '𝐟', 'g': '𝐠',
+        'h': '𝐡', 'i': '𝐢', 'j': '𝐣', 'k': '𝐤', 'l': '𝐥', 'm': '𝐦', 'n': '𝐧',
+        'o': '𝐨', 'p': '𝐩', 'q': '𝐪', 'r': '𝐫', 's': '𝐬', 't': '𝐭', 'u': '𝐮',
+        'v': '𝐯', 'w': '𝐰', 'x': '𝐱', 'y': '𝐲', 'z': '𝐳',
+        'A': '𝐀', 'B': '𝐁', 'C': '𝐂', 'D': '𝐃', 'E': '𝐄', 'F': '𝐅', 'G': '𝐆',
+        'H': '𝐇', 'I': '𝐈', 'J': '𝐉', 'K': '𝐊', 'L': '𝐋', 'M': '𝐌', 'N': '𝐍',
+        'O': '𝐎', 'P': '𝐏', 'Q': '𝐐', 'R': '𝐑', 'S': '𝐒', 'T': '𝐓', 'U': '𝐔',
+        'V': '𝐕', 'W': '𝐖', 'X': '𝐗', 'Y': '𝐘', 'Z': '𝐙'
+    }
+    
+    # Split text by bold markers
+    parts = text.split('**')
+    result = []
+    
+    # Convert alternating parts
+    for i, part in enumerate(parts):
+        if i % 2 == 1:  # Bold sections
+            bold_text = ''.join(unicode_bold.get(c, c) for c in part)
+            result.append(bold_text)
+        else:  # Regular text
+            result.append(part)
+            
+    return ''.join(result)

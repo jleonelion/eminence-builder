@@ -2,17 +2,16 @@ from langchain import hub
 
 """Default prompts."""
 
-PARSE_POST_REQUEST_PROMPT = (
-    """
-    Review the user's input and try to determine the below items.  If you can't determine any of the items, leave them blank.
+PARSE_POST_REQUEST_PROMPT = """
+    Review the user's input and try to determine the below items.  If you can't determine any particular item, leave them blank.
     - The topic of the post desired by the user.
+    - Editorial commentary provided by the user to include in the post.  Do not make this up yourself.  If the user did not provide any commentary, leave this blank.
     - The style of the post.  This will be based on the topic of the post.  Use only one of the following options.  If the topic relates to current events, use "news".  If the topic is explaining technical content, use "technical".  If the topic does not match any of these, use "default".
-    - Any links the user is referencing as sources for the post content.
+    - Any links the user is referencing as information sources for post content.
     """
-)
-POST_SYSTEM_PROMPT = (
-    """
-You're a highly regarded technlogy influencer on LinkedIn.  Your posts are educational, thought provoking, and engaging.
+POST_SYSTEM_PROMPT = """
+You're an assistant with expertise in writing social media content for LinkedIn.  I need you to create quality posts that are educational, thought provoking, and engaging.
+This is very imporant for me to build my brand and engage with my audience.
 You've been provided with a marketing report on the topic you will be writing a post about.
 Your coworker took the time to write this report, so take your time and read it carefully.
 
@@ -42,9 +41,7 @@ Step 3. Lastly, write the LinkedIn post. Use the notes and thoughts you wrote do
 
 Given these examples, rules, and the content provided by the user, curate a LinkedIn post that is engaging and follows the structure of the examples provided.`;
     """
-)
-POST_EXAMPLES = (
-    """
+POST_EXAMPLES = """
 <example index="1">
 Strong execution requires strong fundamentals...so you're not wasting time by reviewing the basics.
 
@@ -74,9 +71,7 @@ Explore quantum computing with IBM’s Qiskit library and test algorithms on rea
 hashtag#QuantumComputing hashtag#Innovation hashtag#IBM hashtag#Google hashtag#FutureTech
 </example>
     """
-)
-NEWS_POST_EXAMPLES = (
-    """
+NEWS_POST_EXAMPLES = """
 <example index="1">
 🤯 **OpenAI Goes Nuclear** 😬
 OpenAI announces a strategic partnership with the U.S. National Laboratories, focused on leveraging advanced AI for scientific research and nuclear weapons security. 
@@ -90,10 +85,8 @@ Cast your vote in the comments below.
 #nuclearai #treadcautiously #skynet
 </example>
     """
-)
 
-POST_STRUCTURE_INSTRUCTIONS = (
-    """
+POST_STRUCTURE_INSTRUCTIONS = """
 The post should have three main sections, outlined below:
 <structure-instructions>
 
@@ -113,38 +106,41 @@ The final section of the post should contain a call to action or question for op
 
 </structure-instructions>
     """
-)
-NEWS_POST_STRUCTURE_INSTRUCTIONS = (
-    """
-The post should have three main sections, outlined below:
+NEWS_POST_STRUCTURE_INSTRUCTIONS = """
+The post should have several sections, outlined below:
 <structure-instructions>
 
 <section key="1">
-The first part of the post is the header. This should be very short and provacative. Include one or two emojis. Choose the most controversal impact for the header.
+The first part of the post is the header. This should be very short and provacative. Include bold text and one or two emojis. Choose the most controversal impact for the header.
 </section>
 
 <section key="2">
-This provides probing statements about the most controversial impact of the event. Use playful language to engage the reader.
+This is my own opinion and commentary on the event.  Use the included commentary, only modifying it when there are typos, major grammatical errors, or you think it should be rephrased to increase engagement.
+<commentary>
+{commentary}
+</commentary>
 </section>
 
 <section key="3">
+This provides a very brief summary about the event. Use playful language to engage the reader and summarize in one to two sentences.
+</section>
+
+<section key="4">
 This section contains a call to action.  This should be a short question and statement that encourages the reader to provide their own opinion in the comments.
 </section>
 
-<section key="3">
+<section key="5">
 This section of the post includes link to the reference material.
 </section>
 
-<section key="3">
+<section key="6">
 The final section of the post should be relevant hashtags.  Don't be afraid to create your own hashtags that reflect the opinon expressed in prior sections and make reference to relevant popular culture.
 </section>
 
 </structure-instructions>
     """
-)
 
-POST_CONTENT_RULES = (
-    """
+POST_CONTENT_RULES = """
 - Focus your post on what the content covers, the benefits, and summarize how it works. This should be concise and high level.
 - Feel free to make the post somewhat technical as some of our audience may be advanced developers.
 - Keep posts short, concise and engaging
@@ -152,17 +148,13 @@ POST_CONTENT_RULES = (
 - use hashtags at the end of the post to increase visibility
 - ALWAYS include the link to the source materials in the call to action section of the post.
     """
-)
-NEWS_POST_CONTENT_RULES = (
-    """
+NEWS_POST_CONTENT_RULES = """
 - Keep posts short, concise, opinionated, and engaging
 - Limit the use of emojis to the post header, and optionally in the call to action.
 - ALWAYS use present tense to make announcements feel immediate (e.g., "Microsoft just launched..." instead of "Microsoft launches...").
     """
-)
 
-CONDENSE_POST_PROMPT = (
-    """
+CONDENSE_POST_PROMPT = """
 You're a highly skilled technology influencer, working on crafting thoughtful and engaging content for LinkedIn posts.
 You wrote a post for the LinkedIn, however it's a bit too long, and thus needs to be condensed.
 
@@ -204,10 +196,8 @@ Follow this flow to rewrite the post in a condensed format:
 
 Follow all rules and instructions outlined above. The user message below will provide the original post. Remember to have fun while rewriting it! Go!
     """
-)
 
-REPORT_SYSTEM_PROMPT_DEFAULT = (
-    """
+REPORT_SYSTEM_PROMPT_DEFAULT = """
 You are a highly regarded software and systems architect.
 You have been tasked with writing a marketing report on content submitted to you from a third party.
 This marketing report will then be used to craft LinkedIn posts summarizing the content.
@@ -236,9 +226,7 @@ Finally, remember to have fun!
 
 Given these instructions, examine the users input closely, and generate a detailed and thoughtful marketing report on it.
     """
-)
-REPORT_SYSTEM_PROMPT_NEWS = (
-    """
+REPORT_SYSTEM_PROMPT_NEWS = """
 You are a news reporter.
 You have been tasked with writing an article using content submitted to you from a third party.
 This article will be used to craft LinkedIn posts summarizing the event and making opinionated commentary.
@@ -274,10 +262,8 @@ Finally, remember to have fun!
 
 Given these instructions, examine the users input closely, and generate a detailed and thoughtful article on it.
     """
-)
 
-REPORT_CONTENT_RULES = (
-    """
+REPORT_CONTENT_RULES = """
 - Focus on the subject of the content, and how it relates to the real-world scenarios.
 - The final LinkedIn post will be developer focused, so ensure the report is VERY technical and detailed.
 - You should include ALL relevant details in the report, because doing this will help the final post be more informed, relevant and engaging.
@@ -286,9 +272,7 @@ REPORT_CONTENT_RULES = (
 - Use proper markdown styling when formatting the marketing report.
 - Generate the report in English, even if the content submitted is not in English.
     """
-)
-REPORT_STRUCTURE_GUIDELINES = (
-    """
+REPORT_STRUCTURE_GUIDELINES = """
 <part key="1">
 This is the introduction and summary of the content. This must include key details such as:
 - the name of the content/product/service.
@@ -311,10 +295,8 @@ This section should cover any additional details about the content that the firs
 - any other relevant information that may be engaging to readers.
 </part>
     """
-)
 
-RELEVANCE_EVALUATION_SYSTEM_PROMPT = (
-    """
+RELEVANCE_EVALUATION_SYSTEM_PROMPT = """
 You are a highly regarded technlogy influencer, working on crafting educational, thoughtful and engaging content for LinkedIn pages.
 You're provided with a webpage containing content to use for creating a LinkedIn post about the following topic.
 <topic>
@@ -325,7 +307,6 @@ Your task is to carefully read over the entire page, and determine whether or no
 You're doing this to ensure the post is based on materials that will provide valuable insights into the topic.
 You should provide reasoning as to why or why not the content is relevant, then a simple true or false conclusion if the content is relevant.
     """
-)
 
 ROUTE_RESPONSE_PROMPT = """
 You are an AI assistant tasked with routing a user's response to one of two possible routes based on their intention. The two possible routes are:
@@ -391,18 +372,15 @@ Explanation: The user is engaging in general conversation, not a request to chan
 Remember to always base your decision on the actual content of the user's response, not on these examples.
 """
 
-REFLECTIONS_PROMPT = (
-"""
+REFLECTIONS_PROMPT = """
 You have also been provided with a handful of reflections based on previous requests the user has made.
 Be sure to follow these rules when writing this new post so the user does not need to repeat their requests:
 <reflections>
 {reflections}
 </reflections>
 """
-)
 
-REWRITE_POST_PROMPT = (
-"""
+REWRITE_POST_PROMPT = """
 You're a highly regarded marketing employee, working on crafting thoughtful and engaging content for the LinkedIn and Twitter pages.
 You wrote a post for the LinkedIn and Twitter pages, however your boss has asked for some changes to be made before it can be published.
 
@@ -415,10 +393,8 @@ The original post you wrote is as follows:
 
 Listen to your boss closely, and make the necessary changes to the post. You should respond ONLY with the updated post, with no additional information, or text before or after the post.
 """
-)
 
-VALIDATE_IMAGES_PROMPT = (
-    """
+VALIDATE_IMAGES_PROMPT = """
 You are an advanced AI assistant tasked with validating image options for a social media post.
 Your goal is to identify which images from a given set are relevant to the post, based on the content of the post and an associated marketing report.
 
@@ -456,11 +432,9 @@ If an image is borderline, err on the side of inclusion.
 
 Provide your complete response within <answer> tags.
     """
-)
 
 
-RERANK_IMAGES_PROMPT = (
-"""
+RERANK_IMAGES_PROMPT = """
 You're a highly regarded marketing employee, working on crafting thoughtful and engaging content for your company's LinkedIn and Twitter pages.
 
 You're writing a post, and in doing so you've found a series of images that you think will help make the post more engaging.
@@ -501,4 +475,3 @@ Ensure you ALWAYS WRAP your analysis and relevant indices inside the <analysis> 
 
 Provide your complete response within <answer> tags.
 """
-)
