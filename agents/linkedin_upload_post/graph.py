@@ -1,4 +1,5 @@
 import asyncio
+import os
 from datetime import datetime
 from typing import Literal
 
@@ -10,7 +11,9 @@ from agents.linkedin_upload_post.utils import *
 from langgraph.graph import END, START, StateGraph
 from langchain_core.runnables import RunnableConfig
 from browser_use.browser.browser import Browser
-from browser_use import Agent
+from browser_use.browser.context import BrowserContext
+from browser_use.agent.views import ActionResult
+from browser_use import Agent, Controller
 import logging
 
 logger = logging.getLogger(__name__)
@@ -30,7 +33,7 @@ async def load_document(
     return {"post": None}
 
 
-async def create_post(
+async def upload_post(
     state: LinkedInUploadPostState, config: RunnableConfig
 ) -> LinkedInUploadPostState:
     """Create report content."""
@@ -44,27 +47,78 @@ async def create_post(
     browser = None
     uploaded = False
     collection = load_mongo_collection(config)
+    browser = Browser(config=config.browser_config)
+    controller = Controller()
+
+    # define custom actions for browser_use to handle file uploads
+    # @controller.action(
+    #     "Upload file to interactive element with file path ",
+    # )
+    # async def upload_file(
+    #     index: int, path: str, browser: BrowserContext, available_file_paths: list[str]
+    # ):
+    #     if path not in available_file_paths:
+    #         return ActionResult(error=f"File path {path} is not available")
+
+    #     if not os.path.exists(path):
+    #         return ActionResult(error=f"File {path} does not exist")
+
+    #     element_node = await browser.get_dom_element_by_index(index)
+    #     download_path = await browser._click_element_node(element_node)
+
+
+    #     file_upload_el = await browser.get_locate_element(file_upload_dom_el)
+
+    #     if file_upload_el is None:
+    #         msg = f"No file upload element found at index {index}"
+    #         logger.info(msg)
+    #         return ActionResult(error=msg)
+
+    #     try:
+    #         await file_upload_el.set_input_files(path)
+    #         msg = f"Successfully uploaded file to index {index}"
+    #         logger.info(msg)
+    #         return ActionResult(extracted_content=msg, include_in_memory=True)
+    #     except Exception as e:
+    #         msg = f"Failed to upload file to index {index}: {str(e)}"
+    #         logger.info(msg)
+    #         return ActionResult(error=msg)
+
+    # @controller.action("Read the file content of a file given a path")
+    # async def read_file(path: str, available_file_paths: list[str]):
+    #     if path not in available_file_paths:
+    #         return ActionResult(error=f"File path {path} is not available")
+
+    #     with open(path, "r") as f:
+    #         content = f.read()
+    #     msg = f"File content: {content}"
+    #     logger.info(msg)
+    #     return ActionResult(extracted_content=msg, include_in_memory=True)
+
     try:
         # update post document state to queued (so no parrallel jobs try to upload the same post)
-        collection.update_one(
-            {"_id": state.post["_id"]}, {"$set": {"status": "queued"}}
-        )
+        if not config.draft_mode:
+            collection.update_one(
+                {"_id": state.post["_id"]}, {"$set": {"status": "queued"}}
+            )
         # launch browser agent to upload post
-        browser = Browser(config=config.browser_config)
         model = load_chat_model(config.browser_model, config.browser_model_kwargs)
         agent = Agent(
             task=build_browser_instructions_prompt(state, config),
             llm=model,
+            controller=controller,
             browser=browser,
+            available_file_paths=[state.post.get("image_path", "")],
         )
-        logger.debug("Launching post upload agent.")
+        logger.debug("Starting post upload process.")
         await agent.run(max_steps=20)
         uploaded = True
         # record fact that post was uploaded
-        collection.update_one(
-            {"_id": state.post["_id"]},
-            {"$set": {"status": "uploaded", "posted_date": datetime.now()}},
-        )
+        if not config.draft_mode:
+            collection.update_one(
+                {"_id": state.post["_id"]},
+                {"$set": {"status": "uploaded", "posted_date": datetime.now()}},
+            )
     except Exception as e:
         # rollback status to pending if exception raised before post was uploaded
         if not uploaded:
@@ -80,11 +134,11 @@ async def create_post(
 
 def route_document_loaded(
     state: LinkedInUploadPostConfiguration, config: RunnableConfig
-) -> Literal["create_post", "__end__"]:
-    """Route to create_post if document exists in state."""
+) -> Literal["upload_post", "__end__"]:
+    """Route to upload_post if post exists in state."""
 
     if state.post:
-        return "create_post"
+        return "upload_post"
     else:
         return "__end__"
 
@@ -93,11 +147,11 @@ builder = StateGraph(
     LinkedInUploadPostState, config_schema=LinkedInUploadPostConfiguration
 )
 builder.add_node(load_document)
-builder.add_node(create_post)
+builder.add_node(upload_post)
 builder.add_edge(START, "load_document")
 # builder.add_edge("parse_post_request", "verify_links")
 builder.add_conditional_edges("load_document", route_document_loaded)
-builder.add_edge("create_post", END)
+builder.add_edge("upload_post", END)
 
 # Compile into a graph object that you can invoke and deploy.
 graph = builder.compile()
