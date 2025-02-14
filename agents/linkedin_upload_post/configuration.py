@@ -51,7 +51,8 @@ class LinkedInUploadPostConfiguration(BaseConfiguration):
         metadata={"description": "The configuration for the browser."},
     )
     draft_mode: bool = field(
-        default=False,
+        # default=False,
+        default=True,
         metadata={
             "description": "Controls whether or not post should be drafted or actually submitted."
         },
