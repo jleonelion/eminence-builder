@@ -9,6 +9,7 @@ from dataclasses import field
 import uuid
 from typing import Annotated, Any, Literal, Optional, Union
 import validators
+from pymongo import MongoClient
 
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
@@ -67,7 +68,9 @@ def format_docs(docs: Optional[list[Document]]) -> str:
 </documents>"""
 
 
-def load_chat_model(fully_specified_name: str, model_kwargs: Optional[dict[str, Any]] = None) -> BaseChatModel:
+def load_chat_model(
+    fully_specified_name: str, model_kwargs: Optional[dict[str, Any]] = None
+) -> BaseChatModel:
     """Load a chat model from a fully specified name.
 
     Args:
@@ -89,6 +92,7 @@ def load_chat_model(fully_specified_name: str, model_kwargs: Optional[dict[str, 
         model_kwargs["convert_system_message_to_human"] = True
 
     return init_chat_model(model, model_provider=provider, **model_kwargs)
+
 
 def reduce_docs(
     existing: Optional[list[Document]],
@@ -153,15 +157,21 @@ def reduce_docs(
 
     return existing_list + new_list
 
+
 def unique_list(left: list[str], right: list[str]) -> list[str]:
     return list(dict.fromkeys(left + right))
 
-UrlType = Annotated[Union[Literal["github", "youtube", "general", "twitter", "reddit"], None], field(default_factory=str)]
+
+UrlType = Annotated[
+    Union[Literal["github", "youtube", "general", "twitter", "reddit"], None],
+    field(default_factory=str),
+]
+
 
 # TODO: Implement support for different link types
 def get_link_type(url: str) -> UrlType:
     """Determine the type of link."""
-    
+
     if "github" in url:
         return "github"
     if "youtube" in url:
@@ -172,6 +182,7 @@ def get_link_type(url: str) -> UrlType:
         return "reddit"
     return "general"
 
+
 def is_valid_url(url: str) -> bool:
     """Check if a URL is valid."""
     try:
@@ -179,29 +190,81 @@ def is_valid_url(url: str) -> bool:
     except validators.ValidationFailure:
         return False
 
+
 def convert_md_to_unicode(text):
     # Unicode bold character mappings
     unicode_bold = {
-        'a': '𝐚', 'b': '𝐛', 'c': '𝐜', 'd': '𝐝', 'e': '𝐞', 'f': '𝐟', 'g': '𝐠',
-        'h': '𝐡', 'i': '𝐢', 'j': '𝐣', 'k': '𝐤', 'l': '𝐥', 'm': '𝐦', 'n': '𝐧',
-        'o': '𝐨', 'p': '𝐩', 'q': '𝐪', 'r': '𝐫', 's': '𝐬', 't': '𝐭', 'u': '𝐮',
-        'v': '𝐯', 'w': '𝐰', 'x': '𝐱', 'y': '𝐲', 'z': '𝐳',
-        'A': '𝐀', 'B': '𝐁', 'C': '𝐂', 'D': '𝐃', 'E': '𝐄', 'F': '𝐅', 'G': '𝐆',
-        'H': '𝐇', 'I': '𝐈', 'J': '𝐉', 'K': '𝐊', 'L': '𝐋', 'M': '𝐌', 'N': '𝐍',
-        'O': '𝐎', 'P': '𝐏', 'Q': '𝐐', 'R': '𝐑', 'S': '𝐒', 'T': '𝐓', 'U': '𝐔',
-        'V': '𝐕', 'W': '𝐖', 'X': '𝐗', 'Y': '𝐘', 'Z': '𝐙'
+        "a": "𝐚",
+        "b": "𝐛",
+        "c": "𝐜",
+        "d": "𝐝",
+        "e": "𝐞",
+        "f": "𝐟",
+        "g": "𝐠",
+        "h": "𝐡",
+        "i": "𝐢",
+        "j": "𝐣",
+        "k": "𝐤",
+        "l": "𝐥",
+        "m": "𝐦",
+        "n": "𝐧",
+        "o": "𝐨",
+        "p": "𝐩",
+        "q": "𝐪",
+        "r": "𝐫",
+        "s": "𝐬",
+        "t": "𝐭",
+        "u": "𝐮",
+        "v": "𝐯",
+        "w": "𝐰",
+        "x": "𝐱",
+        "y": "𝐲",
+        "z": "𝐳",
+        "A": "𝐀",
+        "B": "𝐁",
+        "C": "𝐂",
+        "D": "𝐃",
+        "E": "𝐄",
+        "F": "𝐅",
+        "G": "𝐆",
+        "H": "𝐇",
+        "I": "𝐈",
+        "J": "𝐉",
+        "K": "𝐊",
+        "L": "𝐋",
+        "M": "𝐌",
+        "N": "𝐍",
+        "O": "𝐎",
+        "P": "𝐏",
+        "Q": "𝐐",
+        "R": "𝐑",
+        "S": "𝐒",
+        "T": "𝐓",
+        "U": "𝐔",
+        "V": "𝐕",
+        "W": "𝐖",
+        "X": "𝐗",
+        "Y": "𝐘",
+        "Z": "𝐙",
     }
-    
+
     # Split text by bold markers
-    parts = text.split('**')
+    parts = text.split("**")
     result = []
-    
+
     # Convert alternating parts
     for i, part in enumerate(parts):
         if i % 2 == 1:  # Bold sections
-            bold_text = ''.join(unicode_bold.get(c, c) for c in part)
+            bold_text = "".join(unicode_bold.get(c, c) for c in part)
             result.append(bold_text)
         else:  # Regular text
             result.append(part)
-            
-    return ''.join(result)
+
+    return "".join(result)
+
+
+def load_mongo_collection(config):
+    client = MongoClient(config.mongo_url)
+    db = client[config.mongo_db]
+    collection = db[config.mongo_collection_linkedin_posts]
+    return collection
