@@ -31,7 +31,7 @@ firecrawl-py = "^1.10.1"
 pydantic = "^2.10.5"
 linkedin-api-client = "^0.3.0"
 pymongo = "^4.11"
-browser-use = "^0.1.36"
+browser-use = "^0.1.37"
 fastapi = "^0.115.8"
 apscheduler = "^3.11.0"
 
