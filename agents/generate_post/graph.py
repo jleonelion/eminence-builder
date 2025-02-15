@@ -28,6 +28,8 @@ import pytz
 from datetime import datetime
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import requests
+import uuid
 
 
 @dataclass(kw_only=True)
@@ -313,20 +315,36 @@ async def schedule_post(
     """Schedule the post."""
 
     config = GeneratePostConfiguration.from_runnable_config(config)
-    scheduled_post = {
-        "topic": state.topic,
-        "post": convert_md_to_unicode(state.post),
-        "scheduled_date": calc_scheduled_date(state.schedule_date),
-        "status": "pending",
-        "image": state.image,
-        "created_date": datetime.now(),
-    }
+    try:
+        filepath = None
+        if state.image and state.image.get("image_url"):
+            mime_type = state.image.get("mime_type", "image/jpeg")
+            extension = mime_type.split("/")[-1] if "/" in mime_type else "jpg"
 
-    collection = load_mongo_collection(config)
-    result = collection.insert_one(scheduled_post)
+            filename = f"{uuid.uuid4()}.{extension}"
+            filepath = f"{config.image_dir}/{filename}"
+            image_url = state.image["image_url"]
+            response = requests.get(image_url)
+            if response.status_code == 200:
+                with open(filepath, "wb") as f:
+                    f.write(response.content)
+            else:
+                raise ValueError(f"Failed to download image from {image_url}")
 
+        scheduled_post = {
+            "topic": state.topic,
+            "post": convert_md_to_unicode(state.post),
+            "scheduled_date": calc_scheduled_date(state.schedule_date),
+            "status": "pending",
+            **({"image_path": filepath} if filepath else {}),
+            "created_date": datetime.now(),
+        }
+        collection = load_mongo_collection(config)
+        result = collection.insert_one(scheduled_post)
+    except Exception as e:
+        raise ValueError(f"Error storing new post: {e}")
     return {
-        "object_id": result.inserted_id,
+        "object_id": result.inserted_id if result else None,
     }
 
 
