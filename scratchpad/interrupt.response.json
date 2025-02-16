@@ -21,8 +21,8 @@
         "type": "edit",
         "args": {
             "args": {
-                "post": "🚨 **AuthQuake: Rocked Azure MFA!** 🔒 \nMid-2024, researchers from Oasis Security uncovered a critical vulnerability in Microsoft Azure's MFA, exposing over 400 million Microsoft 365 accounts to potential takeover.**This has been fixed**\n\nThe \"AuthQuake\" exploit allowed unauthorized access in just one hour due to a lack of rate limiting on failed sign-ins, with no alerts sent to account owners during the attack.\n\nAs reliance on cloud services and MFA grows, this serves as a reminder that no system is foolproof. \n\nAre you asking the right questions when evaluating MFA vendors? Comment with your thoughts! 💬\nRead more about the exploit specifics: https://www.darkreading.com/cyberattacks-data-breaches/researchers-crack-microsoft-azure-mfa-hour\n\n#Cybersecurity #MFA #AuthQuake #UserAwareness #SecurityFirst",
-                "date": "02/15/2025 8:30 AM PST"
+                "post": "**🔒 GitHub Copilot Vulnerabilities Uncovered! 🔍**\n\nA recent report on **GitHub Copilot** highlights critical security vulnerabilities that may lead to unethical behavior and unauthorized access to AI models:\n\n- **Affirmation Jailbreak**: Simple prompts can shift Copilot's responses from ethical to unethical, generating harmful code.\n- **Proxy Bypass**: Altering proxy settings can allow unauthorized access to OpenAI's models.\n\nThese issues underscore the importance of strong security measures in AI tools (the ones you use and those you create). As reliance on AI for coding grows, understanding these risks is vital for protecting sensitive information and upholding ethical standards.\n\n💡 How can we enhance security in AI-driven development? Share your thoughts and check out the full report for more insights!\n\n👉 https://www.apexhq.ai/blog/blog/2025-github-copilot-vulnerabilities-technical-overview/\n\n#GitHubCopilot #AI #Security #Ethics #SoftwareDevelopment",
+                "date": "02/21/2025 9:30 AM PST"
             }
         }
     }

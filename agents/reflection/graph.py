@@ -47,6 +47,12 @@ async def identify_new_rules(
         raise ValueError("No original text found.")
     if not state.revised_text:
         raise ValueError("No revised text found.")
+    
+    if state.original_text == state.revised_text:
+        logger.info("Skipping analysis.  Original text and revised text match")
+        return {
+            "new_rules": [],
+        }
 
     config = ReflectionConfiguration.from_runnable_config(config)
     model = load_chat_model(config.reflection_model, config.reflection_model_kwargs)
@@ -87,7 +93,7 @@ async def update_ruleset(
         raise ValueError("No new_rules found.")
     
     config = ReflectionConfiguration.from_runnable_config(config)
-    existing_rules = await fetch_rules(config=config)
+    existing_rules = await fetch_rules(config=config, post_style=state.post_style)
     if existing_rules:
         # determine how existing rules should be updated to account for new rules
         model = load_chat_model(config.reflection_model, config.reflection_model_kwargs).with_structured_output(UpdatedRulesetSchema)
@@ -101,8 +107,7 @@ async def update_ruleset(
     else:
         updated_rules = state.new_rules    
     
-    # TODO: Implement key based on post type to support having rulesets for different types of posts
-    await store_rules(config=config, rules=updated_rules)
+    await store_rules(config=config, rules=updated_rules, post_style=state.post_style)
     # test out retrieving the ruleset
     return state
 

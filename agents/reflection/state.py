@@ -19,12 +19,14 @@ class ReflectionState:
     """State of the reflection graph / agent."""
 
     original_text: str = field(
-        default="",
         metadata={"description": "The original text to be reflected upon."},
     )
     revised_text: str = field(
-        default="",
         metadata={"description": "The revised text."},
+    )
+    post_style: str = field(
+        default="default",
+        metadata={"description": "Style associated with the text being anlayzed."},
     )
     editor_feedback: Optional[HumanMessage] = field(
         default=None,

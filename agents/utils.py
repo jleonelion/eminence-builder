@@ -18,53 +18,54 @@ from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
 from langgraph.store.base import BaseStore
 from enum import Enum
+from urllib.parse import urlparse
 
 RULESET_NAMESPACE = ["reflection_rules"]
 RULESET_KEY = "ruleset"
 
 
 async def fetch_rules(
-    config: BaseConfiguration, post_type: str = "default"
+    config: BaseConfiguration, post_style: str = "default"
 ) -> list[str]:
-    """Retrieve persisted rules sets for a given post_type
+    """Retrieve persisted rules sets for a given post style.
 
     Args:
         store (BaseStore): The store to retrieve the ruleset from.
-        post_type (str, optional): Post type of the ruleset. Defaults to "default".
+        post_style (str, optional): The style of post for these rules. Defaults to "default".
 
     Returns:
         list[str]: List of rules for post type.
     """
 
     collection = load_rules_collection(config)
-    filter = {"post_type": post_type}
+    filter = {"post_style": post_style}
     rules_document = collection.find_one(filter)
     rules = rules_document["rules"] if rules_document else []
     return rules
 
 
 async def store_rules(
-    config: BaseConfiguration, rules: list[str], post_type: str = "default"
+    config: BaseConfiguration, rules: list[str], post_style: str = "default"
 ) -> None:
     """
     Stores rules for the given post type
     Args:
         config (BaseConfiguration): Configuration info used to connect to MongoDB.
-        post_type (str, optional): The type of post for these rules. Defaults to "default".
+        post_style (str, optional): The style of post for these rules. Defaults to "default".
     Returns:
         None
     """
-    # only want one document of rules for each post_type...
+    # only want one document of rules for each post_style, so we will update the existing document if it exists
     collection = load_rules_collection(config)
-    filter = {"post_type": post_type}
+    filter = {"post_style": post_style}
     rules_document = collection.find_one(filter)
-    
+
     if rules_document:
         collection.update_one(
             {"_id": rules_document["_id"]}, {"$set": {"rules": rules}}
         )
     else:
-        collection.insert_one({"post_type": post_type, "rules": rules})
+        collection.insert_one({"post_style": post_style, "rules": rules})
 
 
 def _format_doc(doc: Document) -> str:
@@ -221,14 +222,16 @@ UrlType = Annotated[
 # TODO: Implement support for different link types
 def get_link_type(url: str) -> UrlType:
     """Determine the type of link."""
+    parsed_url = urlparse(url)
+    hostname = parsed_url.hostname
 
-    if "github" in url:
+    if "github" in hostname:
         return "github"
-    if "youtube" in url:
+    if "youtube" in hostname:
         return "youtube"
-    if "twitter" in url:
+    if "twitter" in hostname:
         return "twitter"
-    if "reddit" in url:
+    if "reddit" in hostname:
         return "reddit"
     return "general"
 
@@ -314,13 +317,13 @@ def convert_md_to_unicode(text):
 
 
 def load_linkedin_posts_collection(config: BaseConfiguration):
-    db = init_db_connection
+    db = init_db_connection(config=config)
     collection = db[config.mongo_collection_linkedin_posts]
     return collection
 
 
 def load_rules_collection(config: BaseConfiguration):
-    db = init_db_connection(config)
+    db = init_db_connection(config=config)
     collection = db[config.mongo_collection_rules]
     return collection
 

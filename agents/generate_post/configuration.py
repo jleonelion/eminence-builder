@@ -75,6 +75,26 @@ class GeneratePostConfiguration(BaseConfiguration):
             "description": "The timezone to use for scheduling posts."
         },
     )
+    image_dir: str = field(
+        default="~/mongo/images",
+        # default_factory=lambda: os.getenv("MONGODB_COLLECTION_LINKEDIN", "linkedin-posts"),
+        metadata={
+            "description": "The root directory for storing image files associated with post documents."
+        },
+    )
+    reflection_graph_name: str = field(
+        default="reflection",
+        metadata={
+            "description": "Name of the graph the performs reflection on changes made to post content during human review."
+        },
+    )
+    # TODO: figure out why attribute default values cannot be defined in the base configuration
+    langgraph_url: str = field(
+        default="http://localhost:2024",
+        metadata={
+            "description": "URL of the langgraph server hosting various graphs."
+        },
+    )
     mongo_url: str = field(
         default="mongodb://localhost:27017/",
         # default_factory=lambda: os.getenv("MONGODB_URL", "mongodb://localhost:27017/"),
@@ -96,10 +116,12 @@ class GeneratePostConfiguration(BaseConfiguration):
             "description": "The name of the MongoDB collection to store linked in posts."
         },
     )
-    image_dir: str = field(
-        default="~/mongo/images",
-        # default_factory=lambda: os.getenv("MONGODB_COLLECTION_LINKEDIN", "linkedin-posts"),
+    mongo_collection_rules: str = field(
+        default="rules",
+        # default_factory=lambda: os.getenv("MONGODB_COLLECTION_RULES", "rules"),
         metadata={
-            "description": "The root directory for storing image files associated with post documents."
+            "description": "The name of the MongoDB collection to store rules for writing posts."
         },
     )
+
+    

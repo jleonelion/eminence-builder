@@ -24,6 +24,7 @@ from agents.generate_post.utils import *
 from agents.utils import load_linkedin_posts_collection
 from agents.verify_links.graph import graph as verify_links
 from agents.find_images.graph import graph as find_images
+from agents.reflection.state import ReflectionState
 import pytz
 from datetime import datetime
 from pymongo import MongoClient
@@ -249,6 +250,13 @@ async def human(
                     f"Invalid date format: {cast_args.get('date', default_date_string)}"
                 )
 
+            if state.post != response_post:
+                spawn_reflection_graph(
+                    state=ReflectionState(
+                        original_text=state.post, revised_text=response_post
+                    ),
+                    config=config,
+                )
             return {
                 "next": "schedule_post",
                 "schedule_date": post_date,
@@ -295,15 +303,24 @@ async def rewrite_post(
     config = GeneratePostConfiguration.from_runnable_config(config)
     model = load_chat_model(config.rewrite_model, config.rewrite_model_kwargs)
     rewrite_post_prompt = await build_rewrite_post_prompt(state, config, store)
+    editor_feedback = HumanMessage(state.user_response)
     response = await model.ainvoke(
         [
             SystemMessage(rewrite_post_prompt),
-            HumanMessage(state.user_response),
+            editor_feedback,
         ]
     )
-    # TODO call llm to identify and store a new reflection rule basd on original post, rewritten post, and user response
+    new_post = parse_post(response.content)
+    await spawn_reflection_graph(
+        ReflectionState(
+            original_text=state.post,
+            revised_text=new_post,
+            editor_feedback=editor_feedback,
+        ),
+    )
+
     return {
-        "post": parse_post(response.content),
+        "post": new_post,
         "next": None,
         "user_response": None,
     }
