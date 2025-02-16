@@ -21,7 +21,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.types import interrupt, Command
 from agents.generate_post.utils import *
-from agents.utils import load_mongo_collection
+from agents.utils import load_linkedin_posts_collection
 from agents.verify_links.graph import graph as verify_links
 from agents.find_images.graph import graph as find_images
 import pytz
@@ -339,7 +339,7 @@ async def schedule_post(
             **({"image_path": filepath} if filepath else {}),
             "created_date": datetime.now(),
         }
-        collection = load_mongo_collection(config)
+        collection = load_linkedin_posts_collection(config)
         result = collection.insert_one(scheduled_post)
     except Exception as e:
         raise ValueError(f"Error storing new post: {e}")

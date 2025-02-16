@@ -7,14 +7,64 @@ Functions:
 
 from dataclasses import field
 import uuid
+import json
 from typing import Annotated, Any, Literal, Optional, Union
 import validators
 from pymongo import MongoClient
+from agents.configuration import BaseConfiguration
 
 from langchain.chat_models import init_chat_model
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
+from langgraph.store.base import BaseStore
 from enum import Enum
+
+RULESET_NAMESPACE = ["reflection_rules"]
+RULESET_KEY = "ruleset"
+
+
+async def fetch_rules(
+    config: BaseConfiguration, post_type: str = "default"
+) -> list[str]:
+    """Retrieve persisted rules sets for a given post_type
+
+    Args:
+        store (BaseStore): The store to retrieve the ruleset from.
+        post_type (str, optional): Post type of the ruleset. Defaults to "default".
+
+    Returns:
+        list[str]: List of rules for post type.
+    """
+
+    collection = load_rules_collection(config)
+    filter = {"post_type": post_type}
+    rules_document = collection.find_one(filter)
+    rules = rules_document["rules"] if rules_document else []
+    return rules
+
+
+async def store_rules(
+    config: BaseConfiguration, rules: list[str], post_type: str = "default"
+) -> None:
+    """
+    Stores rules for the given post type
+    Args:
+        config (BaseConfiguration): Configuration info used to connect to MongoDB.
+        post_type (str, optional): The type of post for these rules. Defaults to "default".
+    Returns:
+        None
+    """
+    # only want one document of rules for each post_type...
+    collection = load_rules_collection(config)
+    filter = {"post_type": post_type}
+    rules_document = collection.find_one(filter)
+    
+    if rules_document:
+        collection.update_one(
+            {"_id": rules_document["_id"]}, {"$set": {"rules": rules}}
+        )
+    else:
+        collection.insert_one({"post_type": post_type, "rules": rules})
 
 
 def _format_doc(doc: Document) -> str:
@@ -263,8 +313,19 @@ def convert_md_to_unicode(text):
     return "".join(result)
 
 
-def load_mongo_collection(config):
-    client = MongoClient(config.mongo_url)
-    db = client[config.mongo_db]
+def load_linkedin_posts_collection(config: BaseConfiguration):
+    db = init_db_connection
     collection = db[config.mongo_collection_linkedin_posts]
     return collection
+
+
+def load_rules_collection(config: BaseConfiguration):
+    db = init_db_connection(config)
+    collection = db[config.mongo_collection_rules]
+    return collection
+
+
+def init_db_connection(config: BaseConfiguration):
+    client = MongoClient(config.mongo_url)
+    db = client[config.mongo_db]
+    return db

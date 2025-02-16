@@ -26,6 +26,11 @@ class ReflectionState:
         default="",
         metadata={"description": "The revised text."},
     )
-    user_response: Optional[HumanMessage] = field(
-        metadata={"description": "The user's response triggering the reflection."},
+    editor_feedback: Optional[HumanMessage] = field(
+        default=None,
+        metadata={"description": "Feedback from the editor resulting in revised text."},
+    )
+    new_rules: list[str] = field(
+        default_factory=list,
+        metadata={"description": "Rules identified during reflection."},
     )

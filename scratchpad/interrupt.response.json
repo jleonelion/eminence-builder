@@ -21,9 +21,8 @@
         "type": "edit",
         "args": {
             "args": {
-                "post": "🚀 Anthropic Economic Index: AI's Role in the Labor Market 🚀\nA fish likes to swim and people in tech like new tech.  It's a law of nature.\n\nThe **Anthropic Economic Index** reveals how AI is reshaping labor markets through insights from millions of anonymized conversations on Claude.ai. \n\nKey findings: \n- **Augmentation vs. Automation**: AI enhances human capabilities (57%) more than it replaces them (43%). \n- **Wage Correlation**: Significant AI integration is seen in mid-to-high wage occupations, especially in \"computer and mathematical\" fields. \n- **Open-Source Data**: Researchers can access the index to foster collaboration and exploration. \n\nThis index serves as an important resource for understanding the future of work in an AI-driven economy. \n\n💡 How do you see AI shaping your industry? Reply in the comments! \n🔗 https://www.anthropic.com/news/the-anthropic-economic-index\n\n#AI #LaborMarket #AnthropicEconomicIndex #FutureOfWork #Innovation",
-                "image" : "https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2Feeed8fe5c58c7c956ddcf4a2c05d22204537897e-1968x1787.jpg&w=3840&q=75",
-                "date": "02/13/2025 6:30 PM PST"
+                "post": "🚨 **AuthQuake: Rocked Azure MFA!** 🔒 \nMid-2024, researchers from Oasis Security uncovered a critical vulnerability in Microsoft Azure's MFA, exposing over 400 million Microsoft 365 accounts to potential takeover.**This has been fixed**\n\nThe \"AuthQuake\" exploit allowed unauthorized access in just one hour due to a lack of rate limiting on failed sign-ins, with no alerts sent to account owners during the attack.\n\nAs reliance on cloud services and MFA grows, this serves as a reminder that no system is foolproof. \n\nAre you asking the right questions when evaluating MFA vendors? Comment with your thoughts! 💬\nRead more about the exploit specifics: https://www.darkreading.com/cyberattacks-data-breaches/researchers-crack-microsoft-azure-mfa-hour\n\n#Cybersecurity #MFA #AuthQuake #UserAwareness #SecurityFirst",
+                "date": "02/15/2025 8:30 AM PST"
             }
         }
     }

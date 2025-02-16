@@ -17,13 +17,13 @@ async def build_reflections_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore
 ) -> str:
     """Get reflections on the generated post."""
-    reflections = await get_stored_reflections(store)
-    if not reflections:
+    rules = await fetch_rules(store)
+    if not rules:
         # return empty string if no reflection rules in store
         return ""
 
-    # converty relfections to string with - before each reflection
-    reflections_string = "\n- ".join(reflections)
+    # convert relfections to string with - before each rule
+    reflections_string = "\n- ".join(rules)
     return REFLECTIONS_PROMPT.format(reflections=reflections_string)
 
 
@@ -371,16 +371,6 @@ def parse_report(input_string: str) -> str:
 def remove_urls(input_string: str) -> str:
     """Remove all URLs and multi-spaces from the input string."""
     return re.sub(r"\s+", " ", re.sub(r"http[s]?://\S+", "", input_string)).strip()
-
-
-RULESET_NAMESPACE = ("reflection_rules", "rules")
-RULESET_KEY = "ruleset"
-
-
-async def get_stored_reflections(store: BaseStore) -> list[str]:
-    """Get reflections from storage."""
-    ruleset = await store.aget(RULESET_NAMESPACE, key=RULESET_KEY)
-    return ruleset.value if ruleset else []
 
 
 def calc_scheduled_date(scheduled: PostDate) -> datetime:

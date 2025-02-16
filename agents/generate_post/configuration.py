@@ -100,6 +100,6 @@ class GeneratePostConfiguration(BaseConfiguration):
         default="~/mongo/images",
         # default_factory=lambda: os.getenv("MONGODB_COLLECTION_LINKEDIN", "linkedin-posts"),
         metadata={
-            "description": "The root directory for storing image files associated with posts."
+            "description": "The root directory for storing image files associated with post documents."
         },
     )
