@@ -43,6 +43,7 @@ langgraph-cli = { version = "*", extras = ["inmem"] }
 debugpy = "^1.8.11"
 pytest-asyncio = "^0.25.2"
 flask = "^3.1.0"
+pre-commit = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
