@@ -33,6 +33,34 @@ class BaseConfiguration:
         # configurable = _update_configurable_for_backwards_compatibility(configurable)
         _fields = {f.name for f in fields(cls) if f.init}
         return cls(**{k: v for k, v in configurable.items() if k in _fields})
-
+    
+    mongo_url: str = field(
+        default="mongodb://localhost:27017/",
+        # default_factory=lambda: os.getenv("MONGODB_URL", "mongodb://localhost:27017/"),
+        metadata={
+            "description": "The connection string to MongoDB."
+        },
+    )
+    mongo_db: str = field(
+        default="social-media",
+        # default_factory=lambda: os.getenv("MONGODB_DATABASE", "social-media"),
+        metadata={
+            "description": "The name of the MongoDB database."
+        },
+    )
+    mongo_collection_linkedin_posts: str = field(
+        default="linkedin-posts",
+        # default_factory=lambda: os.getenv("MONGODB_COLLECTION_LINKEDIN", "linkedin-posts"),
+        metadata={
+            "description": "The name of the MongoDB collection to store linked in posts."
+        },
+    )
+    mongo_collection_rules: str = field(
+        default="rules",
+        # default_factory=lambda: os.getenv("MONGODB_COLLECTION_RULES", "rules"),
+        metadata={
+            "description": "The name of the MongoDB collection to store rules for writing posts."
+        },
+    )
 
 T = TypeVar("T", bound=BaseConfiguration)

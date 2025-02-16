@@ -21,13 +21,16 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.types import interrupt, Command
 from agents.generate_post.utils import *
-from agents.utils import load_mongo_collection
+from agents.utils import load_linkedin_posts_collection
 from agents.verify_links.graph import graph as verify_links
 from agents.find_images.graph import graph as find_images
+from agents.reflection.state import ReflectionState
 import pytz
 from datetime import datetime
 from pymongo import MongoClient
 from bson.objectid import ObjectId
+import requests
+import uuid
 
 
 @dataclass(kw_only=True)
@@ -247,6 +250,13 @@ async def human(
                     f"Invalid date format: {cast_args.get('date', default_date_string)}"
                 )
 
+            if state.post != response_post:
+                spawn_reflection_graph(
+                    state=ReflectionState(
+                        original_text=state.post, revised_text=response_post
+                    ),
+                    config=config,
+                )
             return {
                 "next": "schedule_post",
                 "schedule_date": post_date,
@@ -293,15 +303,24 @@ async def rewrite_post(
     config = GeneratePostConfiguration.from_runnable_config(config)
     model = load_chat_model(config.rewrite_model, config.rewrite_model_kwargs)
     rewrite_post_prompt = await build_rewrite_post_prompt(state, config, store)
+    editor_feedback = HumanMessage(state.user_response)
     response = await model.ainvoke(
         [
             SystemMessage(rewrite_post_prompt),
-            HumanMessage(state.user_response),
+            editor_feedback,
         ]
     )
-    # TODO call llm to identify and store a new reflection rule basd on original post, rewritten post, and user response
+    new_post = parse_post(response.content)
+    await spawn_reflection_graph(
+        ReflectionState(
+            original_text=state.post,
+            revised_text=new_post,
+            editor_feedback=editor_feedback,
+        ),
+    )
+
     return {
-        "post": parse_post(response.content),
+        "post": new_post,
         "next": None,
         "user_response": None,
     }
@@ -313,20 +332,36 @@ async def schedule_post(
     """Schedule the post."""
 
     config = GeneratePostConfiguration.from_runnable_config(config)
-    scheduled_post = {
-        "topic": state.topic,
-        "post": convert_md_to_unicode(state.post),
-        "scheduled_date": calc_scheduled_date(state.schedule_date),
-        "status": "pending",
-        "image": state.image,
-        "created_date": datetime.now(),
-    }
+    try:
+        filepath = None
+        if state.image and state.image.get("image_url"):
+            mime_type = state.image.get("mime_type", "image/jpeg")
+            extension = mime_type.split("/")[-1] if "/" in mime_type else "jpg"
 
-    collection = load_mongo_collection(config)
-    result = collection.insert_one(scheduled_post)
+            filename = f"{uuid.uuid4()}.{extension}"
+            filepath = f"{config.image_dir}/{filename}"
+            image_url = state.image["image_url"]
+            response = requests.get(image_url)
+            if response.status_code == 200:
+                with open(filepath, "wb") as f:
+                    f.write(response.content)
+            else:
+                raise ValueError(f"Failed to download image from {image_url}")
 
+        scheduled_post = {
+            "topic": state.topic,
+            "post": convert_md_to_unicode(state.post),
+            "scheduled_date": calc_scheduled_date(state.schedule_date),
+            "status": "pending",
+            **({"image_path": filepath} if filepath else {}),
+            "created_date": datetime.now(),
+        }
+        collection = load_linkedin_posts_collection(config)
+        result = collection.insert_one(scheduled_post)
+    except Exception as e:
+        raise ValueError(f"Error storing new post: {e}")
     return {
-        "object_id": result.inserted_id,
+        "object_id": result.inserted_id if result else None,
     }
 
 

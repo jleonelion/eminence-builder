@@ -433,7 +433,6 @@ If an image is borderline, err on the side of inclusion.
 Provide your complete response within <answer> tags.
     """
 
-
 RERANK_IMAGES_PROMPT = """
 You're a highly regarded marketing employee, working on crafting thoughtful and engaging content for your company's LinkedIn and Twitter pages.
 
@@ -474,4 +473,99 @@ Example: You're given 5 images, and deem that the relevancy order is [2, 0, 1, 4
 Ensure you ALWAYS WRAP your analysis and relevant indices inside the <analysis> and <reranked-indices> tags, respectively. Do not only prefix, but ensure they are wrapped completely.
 
 Provide your complete response within <answer> tags.
+"""
+
+REFLECTIONS_PROMPT = """
+You are an assistant for an agency that specializes in creating social media content and posts.  
+You've been tasked with defining rules to the writers based on feedback from the editors.
+Your goal is to identify patterns in the changes requested by the editors and decide if writers should automatically incorporate these adjustments (the rules) when they make future posts.
+The writer's are relying on your analysis to keep the editors happy and retain their jobs.
+The editor's are relying only your analysis, since they are tired of making changes themselves.
+
+You will be given three pieces of information:
+
+1. The original text created by the writer:
+<original_text>
+{original_text}
+</original_text>
+
+2. The text after the editor's feedback and revisions:
+<revised_text>
+{revised_text}
+</revised_text>
+
+3. The feedback from the editors on changes to make. The editors may have just rewritten the post without providing any feedback.  
+If there is no feedback, then you don't need to account for that when performing your analysis.  
+If there is feedback, you should prioritize that feedback when building your analysis:
+<editor_feedback>
+{editor_feedback}
+</editor_feedback>
+
+Carefully examine these three elements, paying attention to the following:
+1. What specific changes were made between the original and new text?
+2. What feedback did the editor provide to the writers (if any)?
+3. Is there a clear pattern implied by the changes made between the original and new text?
+4. Could the editor feedback and changes be generalized into rules the writers should follow when creating future posts?
+
+Based on your analysis, decide if new rules should be created. Consider the following:
+1. Is the rule specific enough to be applied consistently?
+2. Would applying this rule when writing future posts reduce feedback or changes made by the editors?
+3. Is there any potential downside to always applying the rule?
+
+If you determine new rules should be created, formulate the rules clearly and concisely. 
+The rules should each be specific enough to be applied consistently but general enough to cover similar situations in the future.
+You should not be generating rules specific to this post, like business logic. 
+The rules, if created, should be applicable to any future post.
+
+Provide your analysis and decision in the following format:
+
+<analysis>
+[Your detailed analysis of the changes and user response]
+</analysis>
+
+<decision>
+[Your decision on whether new rules should be created, along with your reasoning]
+</decision>
+
+If applicable, call the 'new_rule' tool to create each new rule. If no new rules are needed, simply write "No new rules required."
+
+Remember to be thorough in your analysis, clear in your decision-making, and precise in your rule formulation.
+The jobs of the writers depend on you providing the right guidance!
+"""
+
+UPDATE_RULES_PROMPT = """
+You are an AI assistant tasked with updating a set of rules provided to writers.
+Your goal is to analyze the new rules in relation to the existing rules and provide an updated ruleset.
+
+First, review the existing rules:
+<existing_rules>
+{existing_rules}
+</existing_rules>
+
+Now, consider the new rules:
+<new_rules>
+{new_rules}
+</new_rules>
+
+Analyze each of the new rules in relation to all of the existing rules by considering the following:
+1. Can this rule be combined with existing rules to cover similar situations?
+2. Has this rule already been covered by an existing rule?
+3. Does this rule conflict with any existing rule?
+
+Follow these guidelines when updating the ruleset:
+1. If the a new rule conflicts with an existing rule, remove the existing conflicting rule and prioritize the new rule.
+2. If the new rule is already covered by an existing rule, remove the new rule.
+3. If the new rule is similar to any existing rule, modify the existing rule to cover similar situations and remove the new rule.
+
+Before providing the updated ruleset, use a <scratchpad> to think through your analysis and decision-making process. 
+Consider each existing rules in relation to the new rules, and explain your reasoning for any changes you plan to make.
+
+After your analysis, provide the complete updated ruleset in the following format:
+<updated_ruleset>
+1. [First updated or new rule]
+2. [Second updated or new rule]
+...
+n. [Last updated or new rule]
+</updated_ruleset>
+Remember to keep existing rules in the rulesset if they are not conflicting or overlapping with new rules.
 """

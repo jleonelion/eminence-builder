@@ -46,7 +46,7 @@ async def upload_post(
 
     browser = None
     uploaded = False
-    collection = load_mongo_collection(config)
+    collection = load_linkedin_posts_collection(config)
     browser = Browser(config=config.browser_config)
     controller = Controller()
 
@@ -65,7 +65,6 @@ async def upload_post(
 
     #     element_node = await browser.get_dom_element_by_index(index)
     #     download_path = await browser._click_element_node(element_node)
-
 
     #     file_upload_el = await browser.get_locate_element(file_upload_dom_el)
 

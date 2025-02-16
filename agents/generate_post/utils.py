@@ -1,29 +1,37 @@
 from datetime import datetime, timedelta
 import pytz
 import re
+import logging
+import asyncio
+import threading
 from typing import cast
 
 from agents.generate_post.configuration import GeneratePostConfiguration
 from agents.generate_post.state import GeneratePostState, PostDate
+from agents.reflection.state import ReflectionState
+from agents.reflection.graph import graph as reflection_graph
 from agents.prompts import *
 from agents.utils import *
 from agents.find_images.utils import BLACKLISTED_MIME_TYPES
 from langchain_core.runnables import RunnableConfig
 from langgraph.store.base import BaseStore, Item
+from langgraph.pregel.remote import RemoteGraph
 import aiohttp
+
+logger = logging.getLogger(__name__)
 
 
 async def build_reflections_prompt(
     state: GeneratePostState, config: GeneratePostConfiguration, store: BaseStore
 ) -> str:
     """Get reflections on the generated post."""
-    reflections = await get_stored_reflections(store)
-    if not reflections:
+    rules = await fetch_rules(config=config, post_style=state.style)
+    if not rules:
         # return empty string if no reflection rules in store
         return ""
 
-    # converty relfections to string with - before each reflection
-    reflections_string = "\n- ".join(reflections)
+    # convert relfections to string with - before each rule
+    reflections_string = "\n- ".join(rules)
     return REFLECTIONS_PROMPT.format(reflections=reflections_string)
 
 
@@ -373,16 +381,6 @@ def remove_urls(input_string: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"http[s]?://\S+", "", input_string)).strip()
 
 
-RULESET_NAMESPACE = ("reflection_rules", "rules")
-RULESET_KEY = "ruleset"
-
-
-async def get_stored_reflections(store: BaseStore) -> list[str]:
-    """Get reflections from storage."""
-    ruleset = await store.aget(RULESET_NAMESPACE, key=RULESET_KEY)
-    return ruleset.value if ruleset else []
-
-
 def calc_scheduled_date(scheduled: PostDate) -> datetime:
     """Calculate the scheduled date."""
 
@@ -440,3 +438,24 @@ async def determine_content_type(url: str) -> str:
     content_type = response.headers.get("Content-Type", "image/jpeg")
 
     return content_type
+
+
+def spawn_reflection_graph(
+    state: ReflectionState, config: GeneratePostConfiguration
+):
+    """Spawn a reflection graph."""
+
+    if not config.langgraph_url:
+        raise ValueError("No langgraph_url found.")
+
+    if not config.reflection_graph_name:
+        logger.warning("Skipping reflections because no reflection graph name found.")
+        return
+    
+    def invoke_reflection_graph(state: ReflectionState):
+        reflection_graph.invoke(state)
+
+    # remote_graph = RemoteGraph(config.reflection_graph_name, url=config.langgraph_url)
+    # asyncio.create_task(remote_graph.invoke(input=state))
+    thread = threading.Thread(target=invoke_reflection_graph, args=(state,))
+    thread.start()

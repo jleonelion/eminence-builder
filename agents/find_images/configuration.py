@@ -31,24 +31,3 @@ class FindImagesConfiguration(BaseConfiguration):
             "description": "The language model used to validate images. Should be in the form: provider/model-name."
         },
     )
-    mongo_url: str = field(
-        default="mongodb://localhost:27017/",
-        # default_factory=lambda: os.getenv("MONGODB_URL", "mongodb://localhost:27017/"),
-        metadata={
-            "description": "The connection string to MongoDB."
-        },
-    )
-    mongo_db: str = field(
-        default="social-media",
-        # default_factory=lambda: os.getenv("MONGODB_DATABASE", "social-media"),
-        metadata={
-            "description": "The name of the MongoDB database."
-        },
-    )
-    mongo_collection_linkedin_posts: str = field(
-        default="linkedin-posts",
-        # default_factory=lambda: os.getenv("MONGODB_COLLECTION_LINKEDIN", "linkedin-posts"),
-        metadata={
-            "description": "The name of the MongoDB collection to store linked in posts."
-        },
-    )

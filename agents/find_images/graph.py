@@ -160,7 +160,7 @@ async def rerank_images(
             )
             chunk_analysis = parse_rerank_images_response(response.content)
             # translate chunk index values to global index values (their value in the image_options array)
-            global_indices = [i + base_index for i in chunk_analysis]
+            global_indices = [i for i in chunk_analysis]
             reranked_indices.extend(global_indices)
 
         except Exception as e:

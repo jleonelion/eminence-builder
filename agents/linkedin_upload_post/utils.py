@@ -1,5 +1,5 @@
 from datetime import datetime
-from agents.utils import load_mongo_collection
+from agents.utils import load_linkedin_posts_collection
 from agents.linkedin_upload_post.configuration import LinkedInUploadPostConfiguration
 from agents.linkedin_upload_post.state import LinkedInUploadPostState
 
@@ -41,7 +41,7 @@ def build_browser_instructions_prompt(
 
 def load_next_pending_post(config: LinkedInUploadPostConfiguration):
 
-    collection = load_mongo_collection(config)
+    collection = load_linkedin_posts_collection(config)
 
     # get all posts in pending state scheduled for now (or earlier)
     filter = {
