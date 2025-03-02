@@ -3,19 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Annotated
 
 from agents.configuration import BaseConfiguration
-import os
+
 
 @dataclass(kw_only=True)
 class GeneratePostConfiguration(BaseConfiguration):
     """The configuration for the agent."""
+
     text_only_mode: bool = field(
         default=False,
-        metadata={
-            "description": "Whether or not posts should be plain text."
-        },
+        metadata={"description": "Whether or not posts should be plain text."},
     )
     parse_request_model: str = field(
         default="openai/gpt-4o-mini",
@@ -46,9 +44,7 @@ class GeneratePostConfiguration(BaseConfiguration):
     )
     rewrite_model_kwargs: dict = field(
         default_factory=dict,
-        metadata={
-            "description": "Keyword arguments to pass to the rewrite model."
-        },
+        metadata={"description": "Keyword arguments to pass to the rewrite model."},
     )
     route_model: str = field(
         default="openai/gpt-4o-mini",
@@ -59,24 +55,18 @@ class GeneratePostConfiguration(BaseConfiguration):
     )
     max_post_length: int = field(
         default=1000,
-        metadata={
-            "description": "The maximum length of the post."
-        },
+        metadata={"description": "The maximum length of the post."},
     )
     max_condense_count: int = field(
         default=3,
-        metadata={
-            "description": "The maximum iterations spent condensing post size."
-        },
+        metadata={"description": "The maximum iterations spent condensing post size."},
     )
     timezone: str = field(
         default="America/Los_Angeles",
-        metadata={
-            "description": "The timezone to use for scheduling posts."
-        },
+        metadata={"description": "The timezone to use for scheduling posts."},
     )
     image_dir: str = field(
-        default="~/mongo/images",
+        default="/Users/jamesleone/mongodb/images",
         # default_factory=lambda: os.getenv("MONGODB_COLLECTION_LINKEDIN", "linkedin-posts"),
         metadata={
             "description": "The root directory for storing image files associated with post documents."
@@ -91,23 +81,17 @@ class GeneratePostConfiguration(BaseConfiguration):
     # TODO: figure out why attribute default values cannot be defined in the base configuration
     langgraph_url: str = field(
         default="http://localhost:2024",
-        metadata={
-            "description": "URL of the langgraph server hosting various graphs."
-        },
+        metadata={"description": "URL of the langgraph server hosting various graphs."},
     )
     mongo_url: str = field(
         default="mongodb://localhost:27017/",
         # default_factory=lambda: os.getenv("MONGODB_URL", "mongodb://localhost:27017/"),
-        metadata={
-            "description": "The connection string to MongoDB."
-        },
+        metadata={"description": "The connection string to MongoDB."},
     )
     mongo_db: str = field(
         default="social-media",
         # default_factory=lambda: os.getenv("MONGODB_DATABASE", "social-media"),
-        metadata={
-            "description": "The name of the MongoDB database."
-        },
+        metadata={"description": "The name of the MongoDB database."},
     )
     mongo_collection_linkedin_posts: str = field(
         default="linkedin-posts",
@@ -123,5 +107,3 @@ class GeneratePostConfiguration(BaseConfiguration):
             "description": "The name of the MongoDB collection to store rules for writing posts."
         },
     )
-
-    
