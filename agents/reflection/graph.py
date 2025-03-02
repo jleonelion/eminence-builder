@@ -1,18 +1,18 @@
+import asyncio
 import logging
 from typing import Literal
-
-from pydantic import BaseModel, Field
 
 from langchain_core.messages import SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.graph import END, START, StateGraph
 from langgraph.store.base import BaseStore
+from pydantic import BaseModel, Field
 
 from agents.reflection.configuration import ReflectionConfiguration
 from agents.reflection.state import ReflectionState
 from agents.reflection.utils import *
-from agents.utils import load_chat_model, store_rules, fetch_rules
+from agents.utils import fetch_rules, load_chat_model, store_rules
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def new_rule(rule: str) -> None:
     pass
 
 
-async def identify_new_rules(
+def identify_new_rules(
     state: ReflectionState, config: RunnableConfig
 ) -> ReflectionState:
     """Reflect on changes made to the text and determine if additional writing rules should be created."""
@@ -57,9 +57,9 @@ async def identify_new_rules(
     config = ReflectionConfiguration.from_runnable_config(config)
     model = load_chat_model(config.reflection_model, config.reflection_model_kwargs)
     model = model.bind_tools([new_rule])
-    reflection_prompt = await build_reflection_prompt(state, config)
+    reflection_prompt = asyncio.run(build_reflection_prompt(state, config))
 
-    response = await model.ainvoke(
+    response = model.invoke(
         [
             SystemMessage(reflection_prompt),
         ]
@@ -84,7 +84,7 @@ async def identify_new_rules(
         "new_rules": new_rules,
     }
 
-async def update_ruleset(
+def update_ruleset(
     state: ReflectionState, config: RunnableConfig,
 ) -> ReflectionState:
     """Revise ruleset to incorporate new rules."""
@@ -93,12 +93,12 @@ async def update_ruleset(
         raise ValueError("No new_rules found.")
     
     config = ReflectionConfiguration.from_runnable_config(config)
-    existing_rules = await fetch_rules(config=config, post_style=state.post_style)
+    existing_rules = asyncio.run(fetch_rules(config=config, post_style=state.post_style))
     if existing_rules:
         # determine how existing rules should be updated to account for new rules
         model = load_chat_model(config.reflection_model, config.reflection_model_kwargs).with_structured_output(UpdatedRulesetSchema)
-        update_rules_prompt = await build_update_rules_prompt(existing_rules=existing_rules, new_rules=state.new_rules)
-        response = await model.ainvoke(
+        update_rules_prompt = asyncio.run(build_update_rules_prompt(existing_rules=existing_rules, new_rules=state.new_rules))
+        response = model.invoke(
             [
                 SystemMessage(update_rules_prompt),
             ]
@@ -107,7 +107,7 @@ async def update_ruleset(
     else:
         updated_rules = state.new_rules    
     
-    await store_rules(config=config, rules=updated_rules, post_style=state.post_style)
+    asyncio.run(store_rules(config=config, rules=updated_rules, post_style=state.post_style))
     # test out retrieving the ruleset
     return state
 
