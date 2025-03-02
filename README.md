@@ -22,7 +22,7 @@
 With current folder for this repo open in VSCode:
 
 1. Install Python and Pylance extensions
-1. Launch VSCode command pallette `ctrl+P`
+1. Launch VSCode command pallette `shift+cmd+P`
 1. `>Python: Select Interpreter...`
 1. Enter interpreter path provided by poetry
 

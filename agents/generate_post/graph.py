@@ -1,40 +1,60 @@
-"""
-The generate post graph is responsible for generating a social media post based 
-on a collection of source content. The source content may be URLs directly provided, 
-or it may need to be located via web search relevant to the desired topic.
+"""The generate post graph is responsible for generating a social media post based on a collection of source content.
+
+The source content may be URLs directly provided, or it may need to be located via web search relevant to the desired topic.
 """
 
-from typing import Dict, cast
-
-from langchain_core.documents import Document
-from langchain_core.runnables import RunnableConfig
-from langgraph.constants import Send
-from langgraph.graph import END, START, StateGraph
-from typing_extensions import TypedDict
 import random
-
-from agents.utils import load_chat_model
-from agents.generate_post.state import GeneratePostState, Image
-from agents.generate_post.configuration import GeneratePostConfiguration
-from agents.generate_post.interrupt import *
-from langchain_core.messages import SystemMessage, HumanMessage
-from langchain_core.runnables import RunnableConfig
-from langgraph.types import interrupt, Command
-from agents.generate_post.utils import *
-from agents.utils import load_linkedin_posts_collection
-from agents.verify_links.graph import graph as verify_links
-from agents.find_images.graph import graph as find_images
-from agents.reflection.state import ReflectionState
-import pytz
-from datetime import datetime
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-import requests
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Dict, Literal, Optional, cast
+
+import requests
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
+from langgraph.graph import END, START, StateGraph
+from langgraph.store.base import BaseStore
+from langgraph.types import interrupt
+
+from agents.find_images.graph import graph as find_images
+from agents.generate_post.configuration import GeneratePostConfiguration
+from agents.generate_post.interrupt import (
+    ActionRequest,
+    HumanInterrupt,
+    HumanInterruptConfig,
+    HumanResponse,
+    determine_next_node,
+)
+from agents.generate_post.state import GeneratePostState, Image
+from agents.generate_post.utils import (
+    build_condense_post_system_prompt,
+    build_default_date,
+    build_interrupt_desc,
+    build_post_system_prompt,
+    build_report_content_prompt,
+    build_report_prompt,
+    build_report_system_prompt,
+    build_rewrite_post_prompt,
+    calc_scheduled_date,
+    convert_md_to_unicode,
+    get_next_saturday,
+    get_parse_post_request_prompt,
+    parse_date,
+    parse_post,
+    parse_report,
+    process_image_input,
+    remove_urls,
+    spawn_reflection_graph,
+)
+from agents.reflection.state import ReflectionState
+from agents.utils import load_chat_model, load_linkedin_posts_collection
+from agents.verify_links.graph import graph as verify_links
 
 
 @dataclass(kw_only=True)
 class PostInformation:
+    """Data class with information about the post."""
+
     topic: str
     commentary: Optional[str]
     style: str = field(
@@ -47,7 +67,6 @@ async def parse_post_request(
     state: GeneratePostState, *, config: RunnableConfig
 ) -> GeneratePostState:
     """Parse most recent Human message to determine the information about the post to write."""
-
     config = GeneratePostConfiguration.from_runnable_config(config)
     # call model to generate the report
     model = load_chat_model(config.parse_request_model)
@@ -78,7 +97,6 @@ async def generate_report(
     state: GeneratePostState, *, config: RunnableConfig
 ) -> GeneratePostState:
     """Create report content."""
-
     config = GeneratePostConfiguration.from_runnable_config(config)
     # call model to generate the report
     model = load_chat_model(config.report_model)
@@ -97,7 +115,6 @@ async def generate_post(
     state: GeneratePostState, *, config: RunnableConfig, store: BaseStore
 ) -> GeneratePostState:
     """Create post content."""
-
     if not state.report:
         raise ValueError("No report found.")
     if len(state.relevant_links) == 0:
@@ -127,7 +144,6 @@ async def condense_post(
     state: GeneratePostState, *, config: RunnableConfig, store: BaseStore
 ) -> GeneratePostState:
     """Condense post content."""
-
     if not state.post:
         raise ValueError("No post found.")
     if not state.report:
@@ -163,34 +179,33 @@ async def human(
     state: GeneratePostState, *, config: RunnableConfig
 ) -> GeneratePostState:
     """Invoke human-in-the-loop for post content."""
-
     if not state.post:
         raise ValueError("No post found.")
 
     config = GeneratePostConfiguration.from_runnable_config(config)
     default_date_string = build_default_date(state, config)
 
-    request = HumanInterrupt = {
-        "action_request": {
-            "action": "Schedule LinkedIn posts",
-            "image": (
-                state.image.image_url | ""
-                if state.image and not config.text_only_mode
-                else None
-            ),
-            "args": {
-                "post": state.post,
-                "default_date": default_date_string,
-            },
-            "config": {
-                "allow_ignore": True,
-                "allow_respond": True,
-                "allow_edit": True,
-                "allow_accept": True,
-            },
-            "description": build_interrupt_desc(state, config),
-        }
-    }
+    action_request = ActionRequest(
+        action="Review LinkedIn post",
+        args={
+            "post": state.post,
+            "default_date": default_date_string,
+            "image": state.image if config.text_only_mode else "",
+        },
+    )
+    interrupt_config = HumanInterruptConfig(
+        allow_ignore=True,  # Allow the user to `ignore` the interrupt.
+        allow_respond=True,  # Allow the user to `respond` to the interrupt.
+        allow_edit=True,  # Allow the user to `edit` the interrupt's args.
+        allow_accept=True,  # Allow the user to `accept` the interrupt's args.
+    )
+
+    description = build_interrupt_desc(state, config)
+
+    request = HumanInterrupt(
+        action_request=action_request, config=interrupt_config, description=description
+    )
+
     response = interrupt([request])
     response = response[0] if isinstance(response, list) else response
     response = cast(HumanResponse, response)
@@ -330,7 +345,6 @@ async def schedule_post(
     state: GeneratePostState, *, config: RunnableConfig, store: BaseStore
 ) -> GeneratePostState:
     """Schedule the post."""
-
     config = GeneratePostConfiguration.from_runnable_config(config)
     try:
         filepath = None
@@ -368,6 +382,7 @@ async def schedule_post(
 async def update_schedule_date(
     state: GeneratePostState, *, config: RunnableConfig, store: BaseStore
 ) -> GeneratePostState:
+    """Update scheduled date for a post."""
     # TODO: Implement post scheduling
     # "modified_date": datetime.now(),
     return {
@@ -397,7 +412,6 @@ def route_human_response(
     "schedule_post", "rewrite_post", "update_schedule_date", "human", "__end__"
 ]:  # have to use string literal for END
     """Route after human."""
-
     if state.next:
         if state.next == "unknown_response":
             return "human"
