@@ -1,5 +1,3 @@
-from langchain import hub
-
 """Default prompts."""
 
 PARSE_POST_REQUEST_PROMPT = """
@@ -9,7 +7,7 @@ PARSE_POST_REQUEST_PROMPT = """
     - The style of the post.  This will be based on the topic of the post.  Use only one of the following options.  If the topic relates to current events, use "news".  If the topic is explaining technical content, use "technical".  If the topic does not match any of these, use "default".
     - Any links the user is referencing as information sources for post content.
     """
-POST_SYSTEM_PROMPT = """
+WRITE_POST_SYSTEM_PROMPT = """
 You're an assistant with expertise in writing social media content for LinkedIn.  I need you to create quality posts that are educational, thought provoking, and engaging.
 This is very imporant for me to build my brand and engage with my audience.
 You've been provided with a marketing report on the topic you will be writing a post about.
@@ -158,17 +156,10 @@ CONDENSE_POST_PROMPT = """
 You're a highly skilled technology influencer, working on crafting thoughtful and engaging content for LinkedIn posts.
 You wrote a post for the LinkedIn, however it's a bit too long, and thus needs to be condensed.
 
-You wrote this marketing report on the content which you used to write the original post:
+You wrote the original post based on the below marketing report.  Use this information to rewrite the post, but do not include links to external sites in your post:
 <report>
 {report}
 </report>
-
-And the content has the following link that should ALWAYS be included in the final post:
-<link>
-{link}
-</link>
-
-You should not be worried by the length of the link, as that will be shortened before posting. Only focus on condensing the length of the post content itself.
 
 Here are the rules and structure you used to write the original post, which you should use when condensing the post now:
 <rules-and-structure>
@@ -200,7 +191,7 @@ Follow all rules and instructions outlined above. The user message below will pr
 REPORT_SYSTEM_PROMPT_DEFAULT = """
 You are a highly regarded software and systems architect.
 You have been tasked with writing a marketing report on content submitted to you from a third party.
-This marketing report will then be used to craft LinkedIn posts summarizing the content.
+This marketing report will then be used to craft blog content and LinkedIn posts.
 
 The marketing report should follow the structure guidelines.
 <structure-guidelines>
