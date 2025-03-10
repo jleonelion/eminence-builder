@@ -5,20 +5,19 @@ Functions:
     load_chat_model: Load a chat model from a model name.
 """
 
-from dataclasses import field
 import uuid
-import json
+from dataclasses import field
 from typing import Annotated, Any, Literal, Optional, Union
-import validators
-from pymongo import MongoClient
-from agents.configuration import BaseConfiguration
+from urllib.parse import urlparse
 
+import validators
 from langchain.chat_models import init_chat_model
+from langchain_community.chat_models import ChatPerplexity
 from langchain_core.documents import Document
 from langchain_core.language_models import BaseChatModel
-from langgraph.store.base import BaseStore
-from enum import Enum
-from urllib.parse import urlparse
+from pymongo import MongoClient
+
+from agents.configuration import BaseConfiguration
 
 RULESET_NAMESPACE = ["reflection_rules"]
 RULESET_KEY = "ruleset"
@@ -36,7 +35,6 @@ async def fetch_rules(
     Returns:
         list[str]: List of rules for post type.
     """
-
     collection = load_rules_collection(config)
     filter = {"post_style": post_style}
     rules_document = collection.find_one(filter)
@@ -47,13 +45,14 @@ async def fetch_rules(
 async def store_rules(
     config: BaseConfiguration, rules: list[str], post_style: str = "default"
 ) -> None:
-    """
-    Stores rules for the given post type
+    """Store rules for the given post type.
+
     Args:
         config (BaseConfiguration): Configuration info used to connect to MongoDB.
         post_style (str, optional): The style of post for these rules. Defaults to "default".
+
     Returns:
-        None
+        None.
     """
     # only want one document of rules for each post_style, so we will update the existing document if it exists
     collection = load_rules_collection(config)
@@ -141,6 +140,8 @@ def load_chat_model(
 
     if provider == "google_genai":
         model_kwargs["convert_system_message_to_human"] = True
+    elif provider == "perplexity":
+        return ChatPerplexity(model=model, **model_kwargs)
 
     return init_chat_model(model, model_provider=provider, **model_kwargs)
 
@@ -210,6 +211,15 @@ def reduce_docs(
 
 
 def unique_list(left: list[str], right: list[str]) -> list[str]:
+    """Combine two lists of strings and return a list of unique strings, preserving the order of their first occurrence.
+
+    Args:
+        left (list[str]): The first list of strings.
+        right (list[str]): The second list of strings.
+
+    Returns:
+        list[str]: A list containing unique strings from both input lists, in the order of their first appearance.
+    """
     return list(dict.fromkeys(left + right))
 
 
@@ -239,12 +249,20 @@ def get_link_type(url: str) -> UrlType:
 def is_valid_url(url: str) -> bool:
     """Check if a URL is valid."""
     try:
-        return validators.url(url) == True
+        return validators.url(url)
     except validators.ValidationFailure:
         return False
 
 
 def convert_md_to_unicode(text):
+    """Convert markdown bold text (enclosed in **) to Unicode bold characters.
+
+    Args:
+        text (str): The input text containing markdown bold markers.
+
+    Returns:
+        str: The text with markdown bold markers converted to Unicode bold characters.
+    """
     # Unicode bold character mappings
     unicode_bold = {
         "a": "𝐚",
@@ -317,18 +335,42 @@ def convert_md_to_unicode(text):
 
 
 def load_linkedin_posts_collection(config: BaseConfiguration):
+    """Load the LinkedIn posts collection from the MongoDB database.
+
+    Args:
+        config (BaseConfiguration): The configuration object containing database connection details and collection name.
+
+    Returns:
+        Collection: The MongoDB collection for LinkedIn posts.
+    """
     db = init_db_connection(config=config)
     collection = db[config.mongo_collection_linkedin_posts]
     return collection
 
 
 def load_rules_collection(config: BaseConfiguration):
+    """Load the rules collection from the MongoDB database.
+
+    Args:
+        config (BaseConfiguration): The configuration object containing database connection details and collection name.
+
+    Returns:
+        pymongo.collection.Collection: The MongoDB collection containing the rules.
+    """
     db = init_db_connection(config=config)
     collection = db[config.mongo_collection_rules]
     return collection
 
 
 def init_db_connection(config: BaseConfiguration):
+    """Initialize a connection to the MongoDB database.
+
+    Args:
+        config (BaseConfiguration): Configuration object containing MongoDB connection details.
+
+    Returns:
+        Database: A MongoDB database instance.
+    """
     client = MongoClient(config.mongo_url)
     db = client[config.mongo_db]
     return db
