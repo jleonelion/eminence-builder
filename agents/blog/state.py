@@ -1,5 +1,6 @@
 """This module defines the state structures used in the agent graph."""
 
+import operator
 from dataclasses import dataclass, field
 from typing import Annotated, Optional
 
@@ -7,7 +8,7 @@ from langchain_core.documents import Document
 from langchain_core.messages import AnyMessage
 from langgraph.graph import add_messages
 
-from agents.blog.schema import BlogRequest
+from agents.blog.schema import BlogRequest, Section
 from agents.utils import reduce_docs
 
 
@@ -28,4 +29,20 @@ class BlogState:
         metadata={
             "description": "Collection of documents to reference when writing the blog."
         },
+    )
+    sections: list[Section] = field(
+        default_factory=list,
+        metadata={"description": "Sections of the blog post."},
+    )
+    completed_sections: Annotated[list, operator.add] = field(
+        default_factory=list,
+        metadata={"description": "Sections that have been completed."},
+    )
+    blog_structure: str = field(
+        default="",
+        metadata={"description": "The structure of the blog post."},
+    )
+    final_blog: str = field(
+        default="",
+        metadata={"description": "The final blog post."},
     )
