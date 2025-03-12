@@ -11,8 +11,9 @@ from agents.configuration import BaseConfiguration
 class PplxResearchAgentConfiguration(BaseConfiguration):
     """The configuration for the agent."""
 
+    # https://docs.perplexity.ai/guides/model-cards
     model: str = field(
-        default="perplexity/llama-3.1-sonar-small-128k-online",
+        default="perplexity/sonar-deep-research",
         metadata={
             "description": "The language model. Should be in the form: provider/model-name."
         },

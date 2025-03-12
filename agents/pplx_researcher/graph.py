@@ -1,13 +1,11 @@
 """Core logic for the agent."""
 
 import logging
+import re
 
 from langchain_core.documents import Document
-from langchain_core.messages import HumanMessage
-from langchain_core.prompts import ChatPromptTemplate
 
 from agents.pplx_researcher.configuration import PplxResearchAgentConfiguration
-from agents.pplx_researcher.utils import build_research_prompt
 from agents.utils import load_chat_model
 
 logger = logging.getLogger(__name__)
@@ -47,13 +45,13 @@ class PplxResearchAgent:
         Args:
             topic (str): Research topic to investigate
         """
-        # Execute research
-        system_prompt_template = build_research_prompt()
-        full_prompt = ChatPromptTemplate.from_messages(
-            [system_prompt_template, HumanMessage(content=topic)]
+        # invoke llm, explicitly setting stream to False to avoid errors
+        response = self.llm.invoke(input=topic, stream=False)
+        # Strip everything between <think> tags
+        cleaned_content = re.sub(
+            r"<think>.*?</think>", "", response.content, flags=re.DOTALL
         )
-        chain = full_prompt | self.llm
-        response = chain.invoke({"topic": topic})
+        response.content = cleaned_content.strip()
         document = Document(
             page_content=response.content, metadata=response.additional_kwargs
         )
