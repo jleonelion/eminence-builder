@@ -36,7 +36,6 @@ from agents.generate_post.utils import (
     build_report_system_prompt,
     build_rewrite_post_prompt,
     calc_scheduled_date,
-    convert_md_to_unicode,
     get_next_saturday,
     get_parse_post_request_prompt,
     parse_date,
@@ -47,7 +46,11 @@ from agents.generate_post.utils import (
     spawn_reflection_graph,
 )
 from agents.reflection.state import ReflectionState
-from agents.utils import load_chat_model, load_linkedin_posts_collection
+from agents.utils import (
+    convert_md_to_unicode,
+    load_chat_model,
+    load_linkedin_posts_collection,
+)
 from agents.verify_links.graph import graph as verify_links
 
 

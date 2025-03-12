@@ -179,7 +179,7 @@ class ArxivResearchAgent:
                         "title": paper.get("Title", ""),
                         "authors": paper.get("Authors", []),
                         "publication_date": paper.get("Publication Date", ""),
-                        "arxiv_link": paper.get("ArXiv Link", ""),
+                        "link": paper.get("ArXiv Link", ""),
                         "source": "ArXiv Research Agent",
                     },
                 )
