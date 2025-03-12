@@ -18,13 +18,7 @@ from langgraph.types import interrupt
 
 from agents.find_images.graph import graph as find_images
 from agents.generate_post.configuration import GeneratePostConfiguration
-from agents.generate_post.interrupt import (
-    ActionRequest,
-    HumanInterrupt,
-    HumanInterruptConfig,
-    HumanResponse,
-    determine_next_node,
-)
+from agents.generate_post.interrupt import determine_next_node
 from agents.generate_post.state import GeneratePostState, Image
 from agents.generate_post.utils import (
     build_condense_post_system_prompt,
@@ -46,6 +40,12 @@ from agents.generate_post.utils import (
     spawn_reflection_graph,
 )
 from agents.reflection.state import ReflectionState
+from agents.schema import (
+    ActionRequest,
+    HumanInterrupt,
+    HumanInterruptConfig,
+    HumanResponse,
+)
 from agents.utils import (
     convert_md_to_unicode,
     load_chat_model,
