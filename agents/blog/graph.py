@@ -1,17 +1,17 @@
 """Main graph for the agent."""
 
 from langchain_community.document_loaders import PlaywrightURLLoader
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 
 from agents.blog.configuration import BlogConfiguration
-from agents.blog.prompts import build_research_details_prompt
+from agents.blog.prompts import build_blog_planner_prompt, build_research_details_prompt
 from agents.blog.schema import BlogRequest, Sections
 from agents.blog.state import BlogState
 from agents.pplx_researcher.graph import PplxResearchAgent
-from agents.utils import format_docs, load_chat_model
+from agents.utils import load_chat_model
 
 
 async def extract_details(state: BlogState, *, config: RunnableConfig) -> BlogState:
@@ -50,16 +50,8 @@ async def define_structure(state: BlogState, *, config: RunnableConfig) -> BlogS
     )
     # Generate sections
     structured_llm = llm.with_structured_output(Sections)
-    content = format_docs(state.reference_content)
-    # TODO: not sure if the Human Message is helpful here or just a waste of tokens
-    report_sections = structured_llm.invoke(
-        [SystemMessage(content=content)]
-        + [
-            HumanMessage(
-                content="Generate the sections of the blog post. Your response must include a 'sections' field containing a list of sections. Each section must have: name, description, plan, research, and content fields."
-            )
-        ]
-    )
+    prompt = build_blog_planner_prompt(state=state, config=agent_config)
+    report_sections = structured_llm.invoke([SystemMessage(content=prompt)])
     # TODO: trigger interrupt for hitl to review and approve sections
     return {"sections": report_sections.sections}
 
