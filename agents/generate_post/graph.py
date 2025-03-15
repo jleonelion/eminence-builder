@@ -290,10 +290,20 @@ async def human(
                 ),
             }
         case "accept":
-            if "args" in response["args"]:
-                cast_args: Dict[str, str] = response["args"]["args"]
-                response_post = cast_args.get("post", None)
-                post_date = parse_date(cast_args.get("date", default_date_string))
+            if "args" not in response["args"]:
+                raise ValueError(
+                    f"Expected response to have attribute args with key called args: {response['args']}. Must be defined"
+                )
+            cast_args: Dict[str, str] = response["args"]["args"]
+            response_post = cast_args.get("post", None)
+            post_date = parse_date(cast_args.get("date", default_date_string))
+            procceesed_image = await process_image_input(cast_args.get("image", None))
+            if procceesed_image != "remove":
+                image_state = procceesed_image
+            elif procceesed_image == "remove":
+                image_state = None
+            else:
+                image_state = state.image
 
             return {
                 "next": "schedule_post",
@@ -301,8 +311,12 @@ async def human(
                 "post": response_post if response_post else state.post,
                 "user_response": None,
                 "image": Image(
-                    imageUrl=image_state.get("image_url", None),
-                    mimeType=image_state.get("mime_type", None),
+                    imageUrl=image_state.get("image_url", None)
+                    if image_state
+                    else None,
+                    mimeType=image_state.get("mime_type", None)
+                    if image_state
+                    else None,
                 ),
             }
         case _:
