@@ -2435,15 +2435,15 @@ inmem = ["langgraph-api (>=0.0.12,<0.1.0)", "python-dotenv (>=0.8.0)"]
 
 [[package]]
 name = "langgraph-prebuilt"
-version = "0.1.2"
+version = "0.1.3"
 description = "Library with high-level APIs for creating and executing LangGraph agents and tools."
 optional = false
 python-versions = "<4.0.0,>=3.9.0"
 groups = ["main", "dev"]
 markers = "python_version == \"3.11\" or python_version >= \"3.12\""
 files = [
-    {file = "langgraph_prebuilt-0.1.2-py3-none-any.whl", hash = "sha256:32028c4c4370576748e6c2e075cab1e13b5e3f2c196a390d71cacfb455212311"},
-    {file = "langgraph_prebuilt-0.1.2.tar.gz", hash = "sha256:cfa7e54006d45e8f3d034ee88fa1d457c381bf6a2a0de0e64c5d3a776659e6d0"},
+    {file = "langgraph_prebuilt-0.1.3-py3-none-any.whl", hash = "sha256:4bb8a6b9c9c7f8eee9c6b151e8b379fad02f60679fed9554cfeb4382c4b9f858"},
+    {file = "langgraph_prebuilt-0.1.3.tar.gz", hash = "sha256:9a9be529cd4419b9ec16b4bc80f6b260d5a680b0705f1a58eb09e78962dc2d71"},
 ]
 
 [package.dependencies]
@@ -5717,4 +5717,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "9eb9a66843d894b7d769b70c2c47e16db2fbe2e5e0045e890125995bf3c44537"
+content-hash = "4d584eacb43426006aa2353cd05fe11826801bd91f19b5bda28b75c09d478eff"
