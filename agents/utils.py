@@ -189,6 +189,8 @@ def reduce_docs(
                 item_id = metadata.get("uuid", str(uuid.uuid4()))
 
                 if item_id not in existing_ids:
+                    # remove metadata key from the item to avoid specifying it twice
+                    item.pop("metadata", None)
                     new_list.append(
                         Document(**item, metadata={**metadata, "uuid": item_id})
                     )

@@ -8,7 +8,8 @@
     "interrupt": "./scratchpad/interrupt.py:graph",
     "find_images": "./agents/find_images/graph.py:graph",
     "reflection": "./agents/reflection/graph.py:graph",
-    "blog": "./agents/blog/graph.py:graph"
+    "blog": "./agents/blog/graph.py:graph",
+    "write_blog_section": "./agents/write_blog_section/graph.py:graph"
   },
   "env": ".env",
   "python_version": "3.11",
