@@ -5,6 +5,10 @@ import asyncio
 from langsmith import traceable
 from tavily import AsyncTavilyClient, TavilyClient
 
+from agents.blog.configuration import BlogConfiguration
+from agents.blog.schema import Section
+from agents.blog.state import BlogState
+
 
 @traceable
 def tavily_search(query):
@@ -66,3 +70,50 @@ async def tavily_search_async(search_queries, tavily_topic, tavily_days):
     search_docs = await asyncio.gather(*search_tasks)
 
     return search_docs
+
+
+def build_sections_approval(state: BlogState, config: BlogConfiguration) -> dict:
+    """Build the sections approval prompt."""
+    sections = state.sections
+    sections_str = "\n".join(
+        [
+            f"{i + 1}. {section.name}: {section.description} (research={section.research})"
+            for i, section in enumerate(sections)
+        ]
+    )
+    return f"""[]
+# Confirm Blog Sections
+  
+Sections for the blog post need your approval.
+
+## Sections:
+```
+{sections_str}
+```
+## Instructions
+
+There are a few different actions which can be taken:\n
+- **Edit**: Updated sections submitted will be used to generate blog post.
+- **Accept**: If 'accept' is selected, the post will be generated using the define sections.
+- **Ignore**: If 'ignore' is selected, this post will not generated and the thread will end.
+"""
+
+
+def format_sections(sections: list[Section]) -> str:
+    """Format a list of sections into a string."""
+    formatted_str = ""
+    for idx, section in enumerate(sections, 1):
+        formatted_str += f"""
+{"=" * 60}
+Section {idx}: {section.name}
+{"=" * 60}
+Description:
+{section.description}
+Requires Research: 
+{section.research}
+
+Content:
+{section.content if section.content else "[Not yet written]"}
+
+"""
+    return formatted_str

@@ -46,3 +46,7 @@ class BlogState:
         default="",
         metadata={"description": "The final blog post."},
     )
+    completed_blog_sections: str = field(
+        default="",
+        metadata={"description": "Formatted string of various sections completed."},
+    )

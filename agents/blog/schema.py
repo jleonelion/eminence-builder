@@ -32,7 +32,7 @@ class Section(BaseModel):
     research: bool = Field(
         description="Whether to perform web research for this section of the report."
     )
-    content: str = Field(description="The content of the section.")
+    content: Optional[str] = Field(description="The content of the section.")
 
 
 class Sections(BaseModel):

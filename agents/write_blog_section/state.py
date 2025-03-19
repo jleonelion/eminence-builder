@@ -44,6 +44,12 @@ class WriteBlogSectionState:
             "description": "Limit on number of searches to perform when writing content."
         },
     )
+    completed_blog_sections: str = field(
+        default="",
+        metadata={
+            "description": "String of any completed sections from research to write final sections"
+        },
+    )
 
     # TODO not sure if these are needed
     # blog_request: Optional[BlogRequest] = field(
@@ -52,7 +58,6 @@ class WriteBlogSectionState:
     # )
     # search_queries: list[SearchQuery] # List of search queries
     # source_str: str # String of formatted source content from web search
-    # report_sections_from_research: str # String of any completed sections from research to write final sections
 
 
 @dataclass(kw_only=True)
