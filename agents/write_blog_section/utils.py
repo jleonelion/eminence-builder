@@ -2,10 +2,13 @@
 
 import asyncio
 
+import yaml
+from langchain_core.documents import Document
 from langsmith import traceable
 from tavily import AsyncTavilyClient, TavilyClient
 
 from agents.blog.configuration import BlogConfiguration
+from agents.blog.schema import Section
 from agents.blog.state import BlogState
 
 
@@ -93,3 +96,50 @@ There are a few different actions which can be taken:\n
 - **Accept**: If 'accept' is selected, the post will be generated using the define sections.
 - **Ignore**: If 'ignore' is selected, this post will not generated and the thread will end.
 """
+
+
+def load_documents_from_yaml(yaml_file_path):
+    """Load documents from a YAML file and convert them to LangChain Document objects.
+
+    Args:
+        yaml_file_path (str): Path to the YAML file
+
+    Returns:
+        list: A list of LangChain Document objects
+    """
+    with open(yaml_file_path) as file:
+        yaml_data = yaml.safe_load(file)
+
+    documents = []
+
+    # Assuming the YAML has a 'reference_content' key with a list of documents
+    for doc_data in yaml_data.get("reference_content", []):
+        document = Document(
+            page_content=doc_data.get("page_content", ""),
+            metadata=doc_data.get("metadata", {}),
+        )
+        documents.append(document)
+
+    return documents
+
+
+def load_section_from_yaml(yaml_file_path) -> Section:
+    """Load section from a YAML file and convert to Section object.
+
+    Args:
+        yaml_file_path (str): Path to the YAML file
+
+    Returns:
+        Section: A Section object populated with data from the YAML file
+    """
+    with open(yaml_file_path) as file:
+        yaml_data = yaml.safe_load(file)
+
+    section = Section(
+        name=yaml_data.get("name", ""),
+        description=yaml_data.get("description", ""),
+        research=yaml_data.get("research", False),
+        content=yaml_data.get("content", ""),
+    )
+
+    return section

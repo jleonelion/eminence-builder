@@ -12,13 +12,13 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import create_react_agent
 from playwright.async_api import async_playwright
 
+from agents.blog.schema import Section
 from agents.utils import load_chat_model
 from agents.write_blog_section.configuration import WriteBlogSectionConfiguration
 from agents.write_blog_section.prompts import (
     build_section_writer_message,
     build_section_writer_system_prompt,
 )
-from agents.write_blog_section.schema import Section
 from agents.write_blog_section.state import (
     WriteBlogSectionOutput,
     WriteBlogSectionState,
@@ -101,13 +101,16 @@ graph.name = "Write Blog Section Graph"
 
 # Example usage
 # import yaml
+# from agents.write_blog_section.utils import (
+#     load_documents_from_yaml,
+#     load_section_from_yaml,
+# )
 # async def main():
-#     # Load section object from "test.yaml" file
-#     with open("/Users/jamesleone/code/eminence-builder/agents/write_blog_section/test.yaml", "r") as file:
-#         section_data = yaml.safe_load(file)
-
-#     # Assuming section_data is a dictionary that can be used to create a WriteBlogSectionState object
-#     section_state = WriteBlogSectionState(**section_data)
+#     yaml_file_path = "/Users/jamesleone/code/eminence-builder/agents/write_blog_section/test.yaml"
+#     # Load objects from "test.yaml" file
+#     documents = load_documents_from_yaml(yaml_file_path)
+#     section = load_section_from_yaml(yaml_file_path)
+#     section_state = WriteBlogSectionState(reference_content=documents, section=section)
 #     report_section = await graph.ainvoke(input=section_state)
 #     print(report_section)
 
