@@ -134,12 +134,12 @@ def load_section_from_yaml(yaml_file_path) -> Section:
     """
     with open(yaml_file_path) as file:
         yaml_data = yaml.safe_load(file)
-
+    section_data = yaml_data.get("section", {})
     section = Section(
-        name=yaml_data.get("name", ""),
-        description=yaml_data.get("description", ""),
-        research=yaml_data.get("research", False),
-        content=yaml_data.get("content", ""),
+        name=section_data.get("name", ""),
+        description=section_data.get("description", ""),
+        research=section_data.get("research", False),
+        content=section_data.get("content", ""),
     )
 
     return section
