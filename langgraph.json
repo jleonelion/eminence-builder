@@ -15,5 +15,9 @@
   "python_version": "3.11",
   "dependencies": [
     "."
-  ]
+  ],
+  "checkpointer": {
+    "type": "sqlite",
+    "path": "/Users/jamesleone/sqlite/checkpoint.db"
+  }
 }
