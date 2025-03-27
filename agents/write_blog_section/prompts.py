@@ -4,8 +4,8 @@ from langchain_core.messages import HumanMessage
 
 from agents.blog.schema import Section
 from agents.utils import format_docs
-from agents.write_blog_section.configuration import WriteBlogSectionConfiguration
-from agents.write_blog_section.state import WriteBlogSectionState
+from agents.write_blog_section.configuration import BlogWriteSectionConfiguration
+from agents.write_blog_section.state import BlogWriteSectionState
 
 SECTION_WRITER_SYSTEM_PROMPT = """You are an expert technical writer crafting one section of a technical blog post.
 
@@ -61,7 +61,7 @@ Guidelines for writing:
 
 
 def build_section_writer_system_prompt(
-    state: WriteBlogSectionState, config: WriteBlogSectionConfiguration
+    state: BlogWriteSectionState, config: BlogWriteSectionConfiguration
 ) -> str:
     """Build the prompt."""
     word_limit = state.word_limit
@@ -79,7 +79,7 @@ Using the following documents as reference context:
 
 
 def build_section_writer_message(
-    state: WriteBlogSectionState, config: WriteBlogSectionConfiguration
+    state: BlogWriteSectionState, config: BlogWriteSectionConfiguration
 ) -> HumanMessage:
     """Build the prompt."""
     section_topic = (

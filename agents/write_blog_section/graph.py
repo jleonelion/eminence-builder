@@ -14,14 +14,14 @@ from playwright.async_api import async_playwright
 
 from agents.blog.schema import Section
 from agents.utils import load_chat_model
-from agents.write_blog_section.configuration import WriteBlogSectionConfiguration
+from agents.write_blog_section.configuration import BlogWriteSectionConfiguration
 from agents.write_blog_section.prompts import (
     build_section_writer_message,
     build_section_writer_system_prompt,
 )
 from agents.write_blog_section.state import (
-    WriteBlogSectionOutput,
-    WriteBlogSectionState,
+    BlogWriteSectionOutput,
+    BlogWriteSectionState,
 )
 
 
@@ -54,10 +54,10 @@ async def initialize_browsing_tools():
 
 
 async def write_section(
-    state: WriteBlogSectionState, *, config: RunnableConfig
-) -> WriteBlogSectionOutput:
+    state: BlogWriteSectionState, *, config: RunnableConfig
+) -> BlogWriteSectionOutput:
     """Extract information from the user message to begin building a research plan."""
-    agent_config = WriteBlogSectionConfiguration.from_runnable_config(config)
+    agent_config = BlogWriteSectionConfiguration.from_runnable_config(config)
 
     llm = load_chat_model(
         fully_specified_name=agent_config.default_model,
@@ -83,12 +83,14 @@ async def write_section(
     else:
         state.section["content"] = response["messages"][-1].content
 
-    return WriteBlogSectionOutput(completed_sections=[state.section])
+    return BlogWriteSectionOutput(completed_sections=[state.section])
 
 
 # Define the graph
 builder = StateGraph(
-    state_schema=WriteBlogSectionState, config_schema=WriteBlogSectionConfiguration
+    state_schema=BlogWriteSectionState,
+    config_schema=BlogWriteSectionConfiguration,
+    output=BlogWriteSectionOutput,
 )
 builder.add_node(write_section)
 
@@ -110,7 +112,7 @@ graph.name = "Write Blog Section Graph"
 #     # Load objects from "test.yaml" file
 #     documents = load_documents_from_yaml(yaml_file_path)
 #     section = load_section_from_yaml(yaml_file_path)
-#     section_state = WriteBlogSectionState(reference_content=documents, section=section)
+#     section_state = BlogWriteSectionState(reference_content=documents, section=section)
 #     report_section = await graph.ainvoke(input=section_state)
 #     print(report_section)
 

@@ -1,70 +1,47 @@
 """This module defines the state structures used in the agent graph."""
 
-from dataclasses import dataclass, field
+from operator import add
 from typing import Annotated, Literal, Optional
 
 from langchain_core.documents import Document
+from pydantic import BaseModel
 
 from agents.blog.schema import Section
 from agents.utils import reduce_docs
 
 
-@dataclass(kw_only=True)
-class WriteBlogSectionState:
-    """State structure for the agent."""
+class BlogWriteSectionState(BaseModel):
+    """BlogWriteSectionState represents the state of the blog writing process.
 
-    tavily_topic: Literal["general", "news"] = field(
-        default="general",
-        metadata={"description": "Type of search to perform ('news' or 'general')"},
-    )
-    # tavily_days: Optional[int] # Only applicable for news topic
-    number_of_queries: int = field(
-        default=5,
-        metadata={"description": "Number web search queries to perform per section"},
-    )
-    section: Section = field(
-        metadata={"description": "Section of the blog post to write."},
-    )
-    completed_sections: Optional[list[Section]] = field(
-        default=None,
-        metadata={"description": "Sections that have been completed."},
-    )
-    reference_content: Annotated[list[Document], reduce_docs] = field(
-        metadata={
-            "description": "Collection of documents to reference when writing the blog."
-        },
-    )
-    word_limit: int = field(
-        default=500,
-        metadata={"description": "Word limit for the section being written."},
-    )
-    search_limit: int = field(
-        default=3,
-        metadata={
-            "description": "Limit on number of searches to perform when writing content."
-        },
-    )
-    completed_blog_sections: str = field(
-        default="",
-        metadata={
-            "description": "String of any completed sections from research to write final sections"
-        },
-    )
+    Attributes:
+        tavily_topic (Literal["general", "news"]): The topic category for the blog section. Defaults to "general".
+        tavily_days (Optional[int]): The number of days to consider for the topic. Defaults to None.
+        number_of_queries (int): The number of queries to perform during the blog writing process. Defaults to 5.
+        section (Section): The current section being worked on.
+        completed_sections (list[Section]): A list of completed sections. Annotated with a custom `add` function.
+        reference_content (list[Document]): A list of reference documents for the blog. Annotated with a custom `reduce_docs` function.
+        word_limit (int): The maximum word limit for the blog section. Defaults to 500.
+        search_limit (int): The maximum number of searches allowed. Defaults to 3.
+        completed_blog_sections (str): A string representation of all completed blog sections.
+    """
 
-    # TODO not sure if these are needed
-    # blog_request: Optional[BlogRequest] = field(
-    #     default=None,
-    #     metadata={"description": "User inputs describing desired blog."},
-    # )
-    # search_queries: list[SearchQuery] # List of search queries
-    # source_str: str # String of formatted source content from web search
+    tavily_topic: Literal["general", "news"] = "general"
+    tavily_days: Optional[int] = None
+    number_of_queries: int = 5
+    section: Section
+    completed_sections: Annotated[list[Section], add] = []
+    reference_content: Annotated[list[Document], reduce_docs] = []
+    word_limit: int = 500
+    search_limit: int = 3
+    completed_blog_sections: str = ""
 
 
-@dataclass(kw_only=True)
-class WriteBlogSectionOutput:
-    """Output structure for the agent."""
+class BlogWriteSectionOutput(BaseModel):
+    """BlogWriteSectionOutput represents the output state of a blog writing section.
 
-    completed_sections: Optional[list[Section]] = field(
-        default=None,
-        metadata={"description": "Sections that have been completed."},
-    )
+    Attributes:
+        completed_sections (list[Section]): A list of completed sections for the blog.
+            This field is annotated with an additional metadata `add`. Defaults to None.
+    """
+
+    completed_sections: Annotated[list[Section], add] = None

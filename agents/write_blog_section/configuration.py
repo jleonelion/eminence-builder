@@ -6,7 +6,7 @@ from agents.configuration import BaseConfiguration
 
 
 @dataclass(kw_only=True)
-class WriteBlogSectionConfiguration(BaseConfiguration):
+class BlogWriteSectionConfiguration(BaseConfiguration):
     """The configuration for the agent."""
 
     default_model: str = field(
