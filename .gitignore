@@ -169,8 +169,6 @@ node_modules/
 !.yarn/sdks
 !.yarn/versions
 
-notebooks
-
 .langgraph-data/
 .langgraph_api/
 # Local .terraform directories
