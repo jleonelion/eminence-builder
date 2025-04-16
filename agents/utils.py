@@ -336,6 +336,20 @@ def convert_md_to_unicode(text):
     return "".join(result)
 
 
+def load_blog_posts_collection(config: BaseConfiguration):
+    """Load the Blog posts collection from the MongoDB database.
+
+    Args:
+        config (BaseConfiguration): The configuration object containing database connection details and collection name.
+
+    Returns:
+        Collection: The MongoDB collection for Blog posts.
+    """
+    db = init_db_connection(config=config)
+    collection = db[config.mongo_collection_blog_posts]
+    return collection
+
+
 def load_linkedin_posts_collection(config: BaseConfiguration):
     """Load the LinkedIn posts collection from the MongoDB database.
 

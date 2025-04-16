@@ -7,8 +7,8 @@ from langchain_core.prompts import SystemMessagePromptTemplate
 from agents.blog.configuration import BlogConfiguration
 from agents.blog.state import BlogState
 from agents.utils import format_docs
-from agents.write_blog_section.configuration import WriteBlogSectionConfiguration
-from agents.write_blog_section.state import WriteBlogSectionState
+from agents.write_blog_section.configuration import BlogWriteSectionConfiguration
+from agents.write_blog_section.state import BlogWriteSectionState
 
 RESEARCH_DETAILS = """
 Examine the user message to provide details that will focus research activities for a blog page.
@@ -144,7 +144,7 @@ For Conclusion/Summary:
 
 
 def build_final_section_writer_prompt(
-    state: WriteBlogSectionState, config: WriteBlogSectionConfiguration
+    state: BlogWriteSectionState, config: BlogWriteSectionConfiguration
 ) -> str:
     """Build the prompt."""
     section = state.section

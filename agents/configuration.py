@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
-from typing import Annotated, Any, Literal, Optional, Type, TypeVar
+from typing import Optional, Type, TypeVar
 
 from langchain_core.runnables import RunnableConfig, ensure_config
 
@@ -15,6 +15,7 @@ MODEL_NAME_TO_RESPONSE_MODEL = {
 @dataclass(kw_only=True)
 class BaseConfiguration:
     """Base configuration class for agents."""
+
     @classmethod
     def from_runnable_config(
         cls: Type[T], config: Optional[RunnableConfig] = None
@@ -33,20 +34,16 @@ class BaseConfiguration:
         # configurable = _update_configurable_for_backwards_compatibility(configurable)
         _fields = {f.name for f in fields(cls) if f.init}
         return cls(**{k: v for k, v in configurable.items() if k in _fields})
-    
+
     mongo_url: str = field(
         default="mongodb://localhost:27017/",
         # default_factory=lambda: os.getenv("MONGODB_URL", "mongodb://localhost:27017/"),
-        metadata={
-            "description": "The connection string to MongoDB."
-        },
+        metadata={"description": "The connection string to MongoDB."},
     )
     mongo_db: str = field(
         default="social-media",
         # default_factory=lambda: os.getenv("MONGODB_DATABASE", "social-media"),
-        metadata={
-            "description": "The name of the MongoDB database."
-        },
+        metadata={"description": "The name of the MongoDB database."},
     )
     mongo_collection_linkedin_posts: str = field(
         default="linkedin-posts",
@@ -62,5 +59,12 @@ class BaseConfiguration:
             "description": "The name of the MongoDB collection to store rules for writing posts."
         },
     )
+    mongo_collection_blog_posts: str = field(
+        default="blog-posts",
+        metadata={
+            "description": "The name of the MongoDB collection to store blog posts."
+        },
+    )
+
 
 T = TypeVar("T", bound=BaseConfiguration)

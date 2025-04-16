@@ -83,7 +83,7 @@ async def write_section(
     else:
         state.section["content"] = response["messages"][-1].content
 
-    return BlogWriteSectionOutput(completed_sections=[state.section])
+    return {"completed_sections": [state.section]}
 
 
 # Define the graph

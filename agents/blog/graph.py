@@ -1,6 +1,7 @@
 """Main graph for the agent."""
 
-from typing import Dict, Literal, cast
+from datetime import datetime
+from typing import Dict, Literal
 
 from langchain_community.document_loaders import PlaywrightURLLoader
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -8,7 +9,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableConfig
 from langgraph.constants import Send
 from langgraph.graph import END, START, StateGraph
-from langgraph.types import interrupt
 
 from agents.blog.configuration import BlogConfiguration
 from agents.blog.prompts import (
@@ -18,18 +18,18 @@ from agents.blog.prompts import (
 )
 from agents.blog.schema import BlogRequest, Sections
 from agents.blog.state import BlogState
-from agents.blog.utils import build_sections_approval, format_sections
+from agents.blog.utils import format_sections
 from agents.pplx_researcher.graph import PplxResearchAgent
-from agents.schema import (
-    ActionRequest,
-    HumanInterrupt,
-    HumanInterruptConfig,
-    HumanResponse,
-)
-from agents.utils import load_chat_model
-from agents.write_blog_section.configuration import WriteBlogSectionConfiguration
+from agents.schema import HumanResponse
+from agents.utils import load_blog_posts_collection, load_chat_model
+from agents.write_blog_section.configuration import BlogWriteSectionConfiguration
 from agents.write_blog_section.graph import graph as section_writer_graph
-from agents.write_blog_section.state import WriteBlogSectionState
+from agents.write_blog_section.state import (
+    BlogWriteSectionOutput,
+    BlogWriteSectionState,
+)
+
+# from __future__ import annotations
 
 
 async def extract_details(state: BlogState, *, config: RunnableConfig) -> BlogState:
@@ -76,31 +76,31 @@ async def define_structure(state: BlogState, *, config: RunnableConfig) -> BlogS
 
 async def approve_structure(state: BlogState, *, config: RunnableConfig) -> BlogState:
     """Define structure for the blog post."""
-    action_request = ActionRequest(
-        action=f"Review Blog sections: {state.blog_request.main_topic}",
-        args={
-            "sections": state.sections,
-            "reference_content": state.reference_content,
-            "blog_request": state.blog_request,
-        },
+    # TODO: implement HITL review
+    # action_request = ActionRequest(
+    #     action=f"Review Blog sections: {state.blog_request.main_topic}",
+    #     args={
+    #         "sections": state.sections,
+    #         "reference_content": state.reference_content,
+    #         "blog_request": state.blog_request,
+    #     },
+    # )
+    # interrupt_config = HumanInterruptConfig(
+    #     allow_ignore=True,  # Allow the user to `ignore` the interrupt.
+    #     allow_respond=False,  # Allow the user to `respond` to the interrupt.
+    #     allow_edit=True,  # Allow the user to `edit` the interrupt's args.
+    #     allow_accept=True,  # Allow the user to `accept` the interrupt's args.
+    # )
+    # description = build_sections_approval(state, config)
+    # request = HumanInterrupt(
+    #     action_request=action_request, config=interrupt_config, description=description
+    # )
+    # response = interrupt([request])
+    # response = response[0] if isinstance(response, list) else response
+    # response = cast(HumanResponse, response)
+    response = HumanResponse(
+        type="accept",
     )
-    interrupt_config = HumanInterruptConfig(
-        allow_ignore=True,  # Allow the user to `ignore` the interrupt.
-        allow_respond=False,  # Allow the user to `respond` to the interrupt.
-        allow_edit=True,  # Allow the user to `edit` the interrupt's args.
-        allow_accept=True,  # Allow the user to `accept` the interrupt's args.
-    )
-
-    description = build_sections_approval(state, config)
-
-    request = HumanInterrupt(
-        action_request=action_request, config=interrupt_config, description=description
-    )
-
-    response = interrupt([request])
-    response = response[0] if isinstance(response, list) else response
-    response = cast(HumanResponse, response)
-
     match response["type"]:
         case "ignore":
             return {
@@ -138,6 +138,12 @@ async def approve_structure(state: BlogState, *, config: RunnableConfig) -> Blog
             }
         case _:
             raise ValueError(f"Unexpected response type: {response['type']}")
+
+
+def calculate_section_word_limit(state: BlogState) -> int:
+    """Calculate the word limit for each section based on the total word count of the blog."""
+    # TODO implement logic to calculate word limit based on the total word count of the blog
+    return 500
 
 
 async def pplx_researcher(state: BlogState, *, config: RunnableConfig) -> BlogState:
@@ -212,24 +218,29 @@ async def summarize_reference_links(
     return state
 
 
-def initiate_section_writing(state: BlogState) -> Literal["proceed", "cancel"]:
+def proceed_with_writing(state: BlogState) -> Literal["proceed", "cancel"]:
     """Route based on human approval of sections."""
     if state.sections:
-        word_limit = 500  # TODO calculate word limit before spawning the agent
-        return [
-            Send(
-                "write_section",
-                WriteBlogSectionState(
-                    section=s,
-                    word_limit=word_limit,
-                    reference_content=state.reference_content,
-                ),
-            )
-            for s in state.sections
-            if s.research
-        ]
+        return "proceed"
     else:
         return "cancel"
+
+
+def spawn_section_writing(state: BlogState):
+    """Route based on human approval of sections."""
+    word_limit = calculate_section_word_limit(state)
+    return [
+        Send(
+            "write_section",
+            BlogWriteSectionState(
+                section=s,
+                word_limit=word_limit,
+                reference_content=state.reference_content,
+            ),
+        )
+        for s in state.sections
+        if s.research
+    ]
 
 
 def gather_completed_sections(state: BlogState) -> BlogState:
@@ -238,29 +249,30 @@ def gather_completed_sections(state: BlogState) -> BlogState:
     completed_sections = state.completed_sections
 
     # Format completed section to str to use as context for final sections
-    completed_blog_sections = format_sections(completed_sections)
+    state.completed_blog_sections = format_sections(completed_sections)
 
-    return {"completed_blog_sections": completed_blog_sections}
+    return state
 
 
-def initiate_final_section_writing(state: BlogState) -> list[Send]:
+def spawn_final_section_writing(state: BlogState) -> list[Send]:
     """Kick off research on any sections that require it using the Send API."""
-    # Kick off section writing in parallel via Send() API for any sections that do not require research
     return [
         Send(
             "write_final_sections",
-            {"section": s, "completed_blog_sections": state.completed_blog_sections},
+            BlogWriteSectionState(
+                section=s, completed_blog_sections=state.completed_blog_sections
+            ),
         )
-        for s in state["sections"]
+        for s in state.sections
         if not s.research
     ]
 
 
 def write_final_sections(
-    state: WriteBlogSectionState, *, config: RunnableConfig
-) -> BlogState:
+    state: BlogWriteSectionState, *, config: RunnableConfig
+) -> BlogWriteSectionOutput:
     """Write final sections of the report, which do not require web search and use the completed sections as context."""
-    agent_config = WriteBlogSectionConfiguration.from_runnable_config(config)
+    agent_config = BlogWriteSectionConfiguration.from_runnable_config(config)
 
     # Format system instructions
     system_instructions = build_final_section_writer_prompt(state, agent_config)
@@ -282,14 +294,14 @@ def write_final_sections(
     state.section.content = section_content.content
 
     # Write the updated section to completed sections
-    return {"completed_sections": state.completed_sections}
+    return {"completed_sections": [state.section]}
 
 
 def compile_final_blog(state: BlogState) -> BlogState:
     """Compile the final report."""
     # Get sections
     sections = state.sections
-    completed_sections = {s.name: s.content for s in state["completed_sections"]}
+    completed_sections = {s.name: s.content for s in state.completed_sections}
 
     # Update sections with completed content while maintaining original order
     for section in sections:
@@ -299,6 +311,24 @@ def compile_final_blog(state: BlogState) -> BlogState:
     all_sections = "\n\n".join([s.content for s in sections])
 
     return {"final_blog": all_sections}
+
+
+def save_blog(state: BlogState, config: BlogConfiguration) -> BlogState:
+    """Save blog for later use."""
+    blog_config = BlogConfiguration.from_runnable_config(config)
+    try:
+        scheduled_blog = {
+            "status": "pending",
+            "created_date": datetime.now(),
+            **state.model_dump(),
+        }
+        collection = load_blog_posts_collection(blog_config)
+        result = collection.insert_one(scheduled_blog)
+    except Exception as e:
+        raise ValueError(f"Error storing new post: {e}")
+    return {
+        "object_id": result.inserted_id if result else None,
+    }
 
 
 # Define the graph
@@ -311,7 +341,9 @@ builder.add_node(approve_structure)
 builder.add_node("write_section", section_writer_graph)
 builder.add_node(gather_completed_sections)
 builder.add_node(write_final_sections)
+builder.add_node("gather_final_sections", gather_completed_sections)
 builder.add_node(compile_final_blog)
+builder.add_node(save_blog)
 
 builder.add_edge(START, "extract_details")
 builder.add_edge("extract_details", "pplx_researcher")
@@ -319,19 +351,22 @@ builder.add_edge("extract_details", "load_priority_links")
 builder.add_edge("load_priority_links", "define_structure")
 builder.add_edge("pplx_researcher", "define_structure")
 builder.add_edge("define_structure", "approve_structure")
+# Use conditional edge to send documents to summarization
 builder.add_conditional_edges(
     "approve_structure",
-    initiate_section_writing,
-    {"proceed": "write_section", "cancel": END},
+    spawn_section_writing,
+    ["write_section"],
 )
 builder.add_edge("write_section", "gather_completed_sections")
 builder.add_conditional_edges(
     "gather_completed_sections",
-    initiate_final_section_writing,
+    spawn_final_section_writing,
     ["write_final_sections"],
 )
-builder.add_edge("write_final_sections", "compile_final_blog")
-builder.add_edge("compile_final_blog", END)
+builder.add_edge("write_final_sections", "gather_final_sections")
+builder.add_edge("gather_final_sections", "compile_final_blog")
+builder.add_edge("compile_final_blog", "save_blog")
+builder.add_edge("save_blog", END)
 
 # Compile into a graph object that you can invoke and deploy.
 graph = builder.compile()
