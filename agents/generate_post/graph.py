@@ -18,13 +18,7 @@ from langgraph.types import interrupt
 
 from agents.find_images.graph import graph as find_images
 from agents.generate_post.configuration import GeneratePostConfiguration
-from agents.generate_post.interrupt import (
-    ActionRequest,
-    HumanInterrupt,
-    HumanInterruptConfig,
-    HumanResponse,
-    determine_next_node,
-)
+from agents.generate_post.interrupt import determine_next_node
 from agents.generate_post.state import GeneratePostState, Image
 from agents.generate_post.utils import (
     build_condense_post_system_prompt,
@@ -36,7 +30,6 @@ from agents.generate_post.utils import (
     build_report_system_prompt,
     build_rewrite_post_prompt,
     calc_scheduled_date,
-    convert_md_to_unicode,
     get_next_saturday,
     get_parse_post_request_prompt,
     parse_date,
@@ -47,7 +40,17 @@ from agents.generate_post.utils import (
     spawn_reflection_graph,
 )
 from agents.reflection.state import ReflectionState
-from agents.utils import load_chat_model, load_linkedin_posts_collection
+from agents.schema import (
+    ActionRequest,
+    HumanInterrupt,
+    HumanInterruptConfig,
+    HumanResponse,
+)
+from agents.utils import (
+    convert_md_to_unicode,
+    load_chat_model,
+    load_linkedin_posts_collection,
+)
 from agents.verify_links.graph import graph as verify_links
 
 
@@ -287,10 +290,20 @@ async def human(
                 ),
             }
         case "accept":
-            if "args" in response["args"]:
-                cast_args: Dict[str, str] = response["args"]["args"]
-                response_post = cast_args.get("post", None)
-                post_date = parse_date(cast_args.get("date", default_date_string))
+            if "args" not in response["args"]:
+                raise ValueError(
+                    f"Expected response to have attribute args with key called args: {response['args']}. Must be defined"
+                )
+            cast_args: Dict[str, str] = response["args"]["args"]
+            response_post = cast_args.get("post", None)
+            post_date = parse_date(cast_args.get("date", default_date_string))
+            procceesed_image = await process_image_input(cast_args.get("image", None))
+            if procceesed_image != "remove":
+                image_state = procceesed_image
+            elif procceesed_image == "remove":
+                image_state = None
+            else:
+                image_state = state.image
 
             return {
                 "next": "schedule_post",
@@ -298,8 +311,12 @@ async def human(
                 "post": response_post if response_post else state.post,
                 "user_response": None,
                 "image": Image(
-                    imageUrl=image_state.get("image_url", None),
-                    mimeType=image_state.get("mime_type", None),
+                    imageUrl=image_state.get("image_url", None)
+                    if image_state
+                    else None,
+                    mimeType=image_state.get("mime_type", None)
+                    if image_state
+                    else None,
                 ),
             }
         case _:

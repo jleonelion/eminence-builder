@@ -3,12 +3,14 @@ repos:
     rev: v5.10.1
     hooks:
       - id: isort
-        args: ["--profile", "black"]      
+        args: ["--profile", "black"]
+        exclude: \.ipynb$
 
   - repo: https://github.com/hadialqattan/pycln
     rev: v2.5.0
     hooks:
       - id: pycln
+        exclude: \.ipynb$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
@@ -17,5 +19,7 @@ repos:
       # Run the linter.
       - id: ruff
         args: [ --fix ]
+        exclude: \.ipynb$
       # Run the formatter.
       - id: ruff-format
+        exclude: \.ipynb$
