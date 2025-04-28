@@ -48,3 +48,13 @@ class BlogConfiguration(BaseConfiguration):
         default_factory=PplxResearchAgentConfiguration,
         metadata={"description": "Configuration for the PPLX researcher."},
     )
+    compile_final_blog_model: str = field(
+        default=None,
+        metadata={
+            "description": "The language model used. Should be in the form: provider/model-name."
+        },
+    )
+    compile_final_blog_model_kwargs: dict = field(
+        default=None,
+        metadata={"description": "Keyword arguments to pass to the model."},
+    )

@@ -13,6 +13,7 @@ from langgraph.graph import END, START, StateGraph
 from agents.blog.configuration import BlogConfiguration
 from agents.blog.prompts import (
     build_blog_planner_prompt,
+    build_compile_blog_prompt,
     build_final_section_writer_prompt,
     build_research_details_prompt,
 )
@@ -297,8 +298,8 @@ def write_final_sections(
     return {"completed_sections": [state.section]}
 
 
-def compile_final_blog(state: BlogState) -> BlogState:
-    """Compile the final report."""
+def compile_final_blog(state: BlogState, *, config: RunnableConfig) -> BlogState:
+    """Compile the final blog."""
     # Get sections
     sections = state.sections
     completed_sections = {s.name: s.content for s in state.completed_sections}
@@ -306,11 +307,24 @@ def compile_final_blog(state: BlogState) -> BlogState:
     # Update sections with completed content while maintaining original order
     for section in sections:
         section.content = completed_sections[section.name]
+    # update state with sections that have been written
+    state.sections = sections
 
-    # Compile final report
-    all_sections = "\n\n".join([s.content for s in sections])
-
-    return {"final_blog": all_sections}
+    agent_config = BlogConfiguration.from_runnable_config(config)
+    llm = load_chat_model(
+        fully_specified_name=agent_config.compile_final_blog_model
+        if agent_config.compile_final_blog_model
+        else agent_config.default_model,
+        model_kwargs=agent_config.compile_final_blog_model_kwargs
+        if agent_config.compile_final_blog_model_kwargs
+        else agent_config.default_model_kwargs,
+    )
+    # Format system instructions
+    prompt = build_compile_blog_prompt(state, agent_config)
+    # Rewrite content of the sections
+    response = llm.invoke([SystemMessage(content=prompt)])
+    # TODO: trigger interrupt for hitl to review and approve sections
+    return {"final_blog": response.content}
 
 
 def save_blog(state: BlogState, config: BlogConfiguration) -> BlogState:

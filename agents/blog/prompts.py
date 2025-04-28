@@ -97,8 +97,8 @@ def build_blog_planner_prompt(state: BlogState, config: BlogConfiguration) -> st
 
 FINAL_SECTION_WRITER_PROMPT = """You are an expert technical writer crafting a section that synthesizes information from the rest of the report.
 
-Section to write: 
-{section_topic}
+Section title: {section_title}
+Section description: {section_topic}
 
 Available report content:
 {context}
@@ -154,4 +154,24 @@ def build_final_section_writer_prompt(
         section_title=section.name,
         section_topic=section.description,
         context=completed_blog_sections,
+    )
+
+
+COMPILE_BLOG_PROMPT = """You are an expert blogger reviewing the draft of a blog post.
+Examine the collective content of the sections and compile them into a single, cohesive blog post using markdown format.
+Use a consistent voice and an writing flow that is engaging, informative, and fun to read.
+Keep the sections in the same order, use the name of each section as the header of that section, and don't add any new sections. 
+Make sure information in the sections is not redudant or contradictory and only the last section should be the conclusion.
+Do not add any new facts, but re-write text as necessary to create the final draft.
+Place all references at the end of the blog post in a sources section.
+
+The sections are:
+{sections}
+"""
+
+
+def build_compile_blog_prompt(state: BlogState, config: BlogConfiguration) -> str:
+    """Build the prompt."""
+    return COMPILE_BLOG_PROMPT.format(
+        sections=state.sections,
     )
