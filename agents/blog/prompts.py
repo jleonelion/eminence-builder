@@ -159,10 +159,10 @@ def build_final_section_writer_prompt(
 
 COMPILE_BLOG_PROMPT = """You are an expert blogger reviewing the draft of a blog post.
 Examine the collective content of the sections and compile them into a single, cohesive blog post using markdown format.
-Use a consistent voice and an writing flow that is engaging, informative, and fun to read.
-Keep the sections in the same order, use the name of each section as the header of that section, and don't add any new sections. 
-Make sure information in the sections is not redudant or contradictory and only the last section should be the conclusion.
-Do not add any new facts, but re-write text as necessary to create the final draft.
+Use a consistent voice throughout that post that is engaging, informative, and fun to read.
+Keep the sections in the same order and use the name of each section as the header of that section.
+You can add or remove sections within a section, but don't add any new sections. 
+Make sure information in the sections is not redudant or contradictory.  There should only be one "conclusion" section and none of the other sections should have their own "conclusion".
 Place all references at the end of the blog post in a sources section.
 
 The sections are:
